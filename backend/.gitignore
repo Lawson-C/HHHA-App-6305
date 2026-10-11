@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Env files (real secrets) — only .env.example is tracked
+.env
+.env.*
+!.env.example
+
+# Strapi build output / caches
+build/
+dist/
+.cache/
+.strapi/
+.strapi-updater.json
+.tmp/
+exports/
+
+# Uploads stored locally (production uses Supabase Storage)
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Logs & OS files
+*.log
+npm-debug.log*
+.DS_Store
+coverage/
