@@ -1,0 +1,9 @@
+node_modules
+backend
+ios
+android
+.expo
+dist
+docs/*.docx
+package-lock.json
+assets
