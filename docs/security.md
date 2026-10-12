@@ -20,6 +20,16 @@
 - If `profile.status` is `banned`, or `suspended` and not yet expired, return `403` for all non-public routes.
 - Strapi's own `users-permissions` login endpoints are **disabled** for app users (we don't issue Strapi JWTs). Its **Public** role is still used to grant read access to public collections.
 
+Implementation (`backend/`):
+- The middleware (`src/middlewares/supabase-auth.ts`) only runs on the REST prefix `/api`. Admin-panel paths (`/admin`, `/content-manager`, `/upload`, …) carry their own Strapi tokens and are left alone.
+- **Algorithm pinning:** the token header decides the key. `ES256`/`RS256` → JWKS. `HS256` → `SUPABASE_JWT_SECRET`, and only if it is set (legacy; prefer asymmetric signing keys). Anything else, including `alg: none`, is rejected. `sub` must be a UUID. Clock tolerance is 5 s. If the JWKS can't be fetched, the answer is `401` (Q-I), never anonymous.
+- Profiles are created on first use with `role = resident`, `status = active` (hard-coded). `fullName` comes from `user_metadata.full_name`, else the email's local part (Q-C); `phone` from metadata only if it is valid E.164. A real unique index on `supabaseUserId` plus in-process de-duplication prevents duplicate profiles under concurrent first requests. `lastSeenAt` is updated at most every 15 minutes, and the `email` mirror follows the token.
+- **Suspension (Q-D):** `banned`, or `suspended` with no `suspendedUntil` (indefinite) or a future one → `403` on non-public routes. Once `suspendedUntil` has passed, access is allowed again; the status is not written back to `active`. Public reads still work for blocked users.
+- **Route pattern:** resident and admin routes use `auth: false` + the `global::is-authenticated` / `global::is-admin` policies (401 with no profile; 403 with `"Account suspended"`, `"Account banned"` or `"Admin only"`). Public collection reads keep Strapi's permission check: `bootstrap()` grants the Public role `find`/`findOne` on events, housing resources, housing listings, library resources and notifications, and a `supabase` content-API auth strategy gives callers with a valid Supabase token the same **Public** permissions (Q-A), so signed-in users don't get `401` there. Nothing elevated ever comes from that strategy.
+- **users-permissions lockdown:** at every boot, `allow_register` is set to false and every `plugin::users-permissions.auth.*` permission is removed from the Public role.
+- **Ownership:** `reporter` (blight), `profile` (reminders, inquiries, push tokens) and `sentBy` (notifications) are always taken from `ctx.state.profile`. `PUT /api/me` silently ignores keys other than the editable ones (Q-G).
+- **Push tokens:** registering or deleting a token needs only the token itself (it is the device's secret). Tokens are never returned in lists and there is no read endpoint.
+
 ## Authorization
 
 | Resource | Guest | Resident | Admin |
@@ -32,6 +42,7 @@
 | Notifications | read history | read history | send |
 | Roles / account status | – | – | change (last-admin invariant) |
 | Admin activity log | – | – | read only (append-only) |
+| Push tokens | register / unregister own device | register (linked to profile) / unregister | same as resident |
 
 - `role` comes **only** from `profile.role` in our database, never from a client-provided field or the JWT's user metadata (users can edit their own `user_metadata`).
 - Ownership fields (`reporter`, `profile`) are set from `ctx.state.profile` on the server. If a request body includes them, they are ignored.
@@ -45,7 +56,9 @@
 
 ## File uploads
 - Blight images: images only (validate MIME **and** extension), ≤ 10 MB, ≤ 5 per report. Strip EXIF metadata before public display, because GPS in EXIF could reveal more than the chosen pin. Stored in a public-read bucket.
+  - Implemented: the file's magic bytes, extension and declared MIME type must agree (JPEG, PNG, WebP), and every photo is re-encoded with `sharp` (orientation applied, all metadata dropped) before upload. HEIC can't be re-encoded with the bundled `sharp`, so HEIC photos are rejected with a `400` until that is solved; the app should send JPEG.
 - Housing attachments: pdf/jpeg/png/heic, ≤ 10 MB, ≤ 5. Stored in a **private** bucket and served only through signed URLs (≤ 15 min) to the owner or admins.
+  - Implemented: content-sniffed like blight photos; URLs appear only in the detail response to the owner or an admin. Signed URLs need the Supabase S3 provider with `SUPABASE_S3_PRIVATE=true`. **Gap:** Strapi has one upload provider, so with a private bucket blight photo URLs are signed (expiring) too, and with the local provider (dev default) attachment files are reachable by anyone who knows their random URL. A separate private provider for attachments is a follow-up.
 
 ## Location privacy
 - Ask for location permission only when it's needed, with a clear purpose string in `app.json`, and use "when in use" only.
@@ -65,5 +78,6 @@
 ## Logging & data retention
 - Never log tokens, passwords, or the contents of attachments.
 - `admin-activity-log` is append-only.
-- Data export (CSV) is admin-only, logged, and excludes contact details unless the client confirms they are needed for grant reporting (Q-007).
+- Data export (CSV) is admin-only, logged, and excludes contact details unless the client confirms they are needed for grant reporting (Q-007). Implemented with that default; cells that start with `=`, `+`, `-`, `@` are prefixed with `'` to block CSV formula injection.
+- `admin-activity-log` append-only is enforced by a Document Service middleware (updates and deletes throw, from the API and from the admin panel alike). Admin actions taken in the app are logged with the admin's profile as `actor`; edits in the Strapi admin panel are logged with `actor = null` and the panel user's id/email in `details`. The last-admin invariant is enforced in the same middleware, so the admin panel can't break it either.
 - Account deletion: to be specified (Q-003). Expect to support it, because app-store policies require it.

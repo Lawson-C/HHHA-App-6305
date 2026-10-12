@@ -44,20 +44,27 @@ One per Supabase user. Created lazily on the first authenticated request (`GET /
 | `suspendedUntil` | datetime | set when `status = suspended` |
 | `notificationPreferences` | component `notification.preferences` | see below |
 | `lastSeenAt` | datetime | updated (throttled) by the auth middleware |
+| `neighborhood` | enum (see *Neighborhoods* below) | optional; drives the home card art and default location |
+| `textSize` | enum `default` \| `large` \| `extra_large` | default `default` (Profile → Preferences) |
+| `language` | enum `en` \| `es` | default `en`. Only English copy exists so far |
 
 Invariant: **at least one `profile` with `role = admin` and `status = active` must exist.** Reject any demotion or ban that would break this.
+
+Implementation notes: `supabaseUserId` has `"column": { "unique": true }` in the schema, which creates a real database unique index (Strapi's plain `unique: true` is only an application-level check). New profiles get `fullName` from the token's `user_metadata.full_name`, falling back to the email's local part (Q-C). Profiles have no REST collection routes (`/api/profiles` doesn't exist); they are reached through `/api/me` and `/api/admin/users`. The invariant is enforced in a Document Service middleware, so it also applies to the Strapi admin panel.
 
 Component `notification.preferences`: `healthWarnings` bool (default true), `communityAnnouncements` bool (default true), `meetingReminders` bool (default true). Emergency alerts have no field because they are always on.
 
 ### `blight-report`
 | Field | Type | Constraints / notes |
 | --- | --- | --- |
-| `category` | enum `illegal_dumping` \| `vacant_lot` \| `environmental_concern` \| `other` | required |
-| `description` | text | required, 10–2000 chars, plain text (sanitize) |
+| `category` | enum `illegal_dumping` \| `vacant_lot` \| `abandoned_building` \| `standing_water` \| `air_odor` \| `other` | required (the six tiles in the Figma "Report: choose type" screen) |
+| `description` | text | optional per the Figma ("What did you see? (optional)"), ≤ 2000 chars, plain text (sanitize) |
+| `keepNamePrivate` | boolean | default `true`. When true, admins don't include the reporter's name when they forward the report to the City |
 | `latitude`, `longitude` | decimal | required. Must be inside the District 3 bounding box (configurable) |
 | `address` | string | optional, from reverse geocoding |
 | `images` | media (multiple, images only) | 1–5 files. jpeg/png/heic/webp. ≤ 10 MB each |
-| `status` | enum `submitted` \| `under_review` \| `reported_to_city` \| `resolved` \| `removed` | default `submitted` |
+| `status` | enum `submitted` \| `under_review` \| `reported_to_city` \| `resolved` \| `removed` | default `submitted`. UI labels: Submitted, Under review, Sent to the City, Resolved |
+| `statusHistory` | json `[{ status, at }]` | appended server-side on every status change; drives the progress timeline. Maintained by a Document Service middleware, so admin-panel status changes append too |
 | `resolutionNote` | text | admin-only edit |
 | `resolvedAt` | datetime | set when status → `resolved` |
 | `reporter` | relation many-to-one → `profile` | required. **Private:** never shown in public responses |
@@ -72,7 +79,10 @@ Component `notification.preferences`: `healthWarnings` bool (default true), `com
 | `startsAt` | datetime (UTC) | required |
 | `endsAt` | datetime (UTC) | required, > `startsAt` |
 | `eventType` | enum `workforce_development` \| `financial_literacy` \| `wellness` \| `civic_meeting` \| `community_gathering` \| `other` | required |
-| `location` | string | optional (address or venue) |
+| `locationName` | string | optional (e.g. "Hunter Hills Community Center") |
+| `address` | string | optional; used for "Get directions" |
+| `costLabel` | string | optional (e.g. "Free") |
+| `costNote` | string | optional (e.g. "Dinner and childcare provided") |
 | `neighborhood` | string | optional |
 
 Times are stored in UTC and displayed in `America/New_York`. Draft & Publish is **on**, so admins can stage events before they appear.
@@ -87,19 +97,36 @@ Times are stored in UTC and displayed in `America/New_York`. Draft & Publish is 
 
 Unique `(profile, event)`. Delete the event's reminders when the event is deleted or unpublished.
 
+Implementation notes: uniqueness is enforced by the API (check + per-process lock, `409` on duplicates), not by a composite DB index. Reminders are removed by a Document Service middleware on event `delete`/`unpublish`, so admin-panel deletions are covered too.
+
 ### `housing-resource`
 | Field | Type | Constraints / notes |
 | --- | --- | --- |
 | `title` | string | required |
-| `category` | enum `affordable_housing` \| `eviction_prevention` \| `rental_assistance` \| `homeownership` | required |
+| `category` | enum `rental_assistance` \| `eviction_prevention` \| `affordable_housing` \| `homeownership` \| `home_repair` | required (`home_repair` added by the Figma prototype) |
+| `highlights` | json `[{ value, label }]` | ≤ 3 stat chips, e.g. `{ value: "Up to 3", label: "months of rent" }` |
 | `summary` | text | required |
-| `eligibility` | rich text | optional. The UI shows "not available" when empty |
-| `requiredMaterials` | rich text | optional |
+| `eligibility` | json `string[]` | optional ("Who can apply" checklist). The UI shows "not available" when empty |
+| `requiredMaterials` | json `string[]` | optional ("What you'll need") |
 | `contactName`, `contactPhone`, `contactEmail`, `website` | strings | optional |
 | `acceptsInquiries` | boolean | default true |
 | `inquiryAllowsAttachments` | boolean | default true |
 
 Draft & Publish **on**.
+
+### `housing-listing`
+Open affordable-housing listings ("Open listings" on the Housing tab). Draft & Publish **on**.
+
+| Field | Type | Constraints / notes |
+| --- | --- | --- |
+| `title` | string | required |
+| `address` | string | required |
+| `neighborhood` | enum (Neighborhoods) | optional |
+| `rentLabel` | string | e.g. "$950/mo" |
+| `bedrooms` | integer | |
+| `image` | media (single image) | optional |
+| `url` | string (URL) | where to apply |
+| `availableFrom` | date | optional |
 
 ### `housing-inquiry`
 | Field | Type | Constraints / notes |
@@ -119,7 +146,12 @@ Visible only to the owner and admins.
 | --- | --- | --- |
 | `title` | string | required, ≤ 65 (push title limit) |
 | `message` | text | required, ≤ 240 |
-| `category` | enum `emergency` \| `health_warning` \| `community_announcement` \| `meeting_reminder` | required |
+| `category` | enum `emergency` \| `health_warning` \| `community_announcement` \| `meeting_reminder` | required. Alerts filter chips: Emergency, Health, Community (meeting reminders show under Community) |
+| `issuer` | string | e.g. "City of Atlanta Watershed Management" |
+| `body` | text | full alert text (Alert detail) |
+| `actionSteps` | json `string[]` | "What to do now" checklist |
+| `affectedArea` | text | e.g. "English Avenue, Vine City and parts of Hunter Hills north of MLK Jr. Dr." |
+| `endsAt` | datetime | optional; after this the alert shows as ended |
 | `sentBy` | relation many-to-one → `profile` | the sending admin |
 | `sentAt` | datetime | set when sent |
 | `recipientCount` | integer | set after fan-out |
@@ -134,16 +166,21 @@ Visible only to the owner and admins.
 
 Delete the token when Expo returns `DeviceNotRegistered`.
 
+Implementation note: `token` also has `"column": { "unique": true }` (a real DB unique index).
+
 ### `library-resource`
 | Field | Type | Constraints / notes |
 | --- | --- | --- |
 | `title` | string | required |
 | `description` | text | required |
-| `category` | enum `education` \| `financial_tools` \| `health` \| `small_business` | required |
+| `category` | enum `education` \| `financial_tools` \| `health` \| `small_business` | required. UI labels: Education, Money, Health, Small business |
 | `resourceType` | enum `article` \| `video` \| `link` | required |
 | `url` | string (URL) | required for `video` and `link` |
 | `body` | rich text | optional (for in-app articles) |
 | `thumbnail` | media (single image) | optional |
+| `source` | string | e.g. "Fulton County Health" |
+| `durationMinutes` | integer | read/watch time |
+| `featured` | boolean | the "Start here" card |
 
 Videos and articles are external links. We don't host video files. Draft & Publish **on**.
 
@@ -170,6 +207,8 @@ Videos and articles are external links. We don't host video files. Draft & Publi
 
 Readings are a cache. Prune readings older than 30 days.
 
+Implementation notes: the NWS `temperature` reading keeps `{ conditions, highF, lowF, hourly: [{ time, temperatureF }] }` in `raw`, which `/api/environment/glance` uses for the home card. A daily cron task prunes readings by `observedAt`.
+
 ### `admin-activity-log`
 Append-only. No update or delete endpoints, not even for admins.
 
@@ -182,6 +221,11 @@ Append-only. No update or delete endpoints, not even for admins.
 | `details` | json | before and after diff or context |
 
 Changes made in the Strapi **admin panel** (not the app) are logged through document-service middleware, so both paths produce entries.
+
+Implementation notes: `actor` is optional. It is the admin's profile for actions taken through the API, and `null` for admin-panel edits (panel users aren't profiles; their id and email go in `details`) and for the `promote-admin` script. Housing listings use `housing_resource_changed`. Inquiry status/notes updates are not logged (no matching action).
+
+## Neighborhoods
+Enum values used by `profile.neighborhood` and `housing-listing.neighborhood`. They match the neighborhood art in the Figma design system: `english_avenue`, `vine_city`, `hunter_hills`, `washington_park`, `bankhead` (Historic Westin Heights / Bankhead), `knight_park` (Knight Park / Howell Station), `dixie_hills`, `west_lake`, `center_hill`, `harvel_homes`, `georgia_tech`.
 
 ## Relationships (summary)
 

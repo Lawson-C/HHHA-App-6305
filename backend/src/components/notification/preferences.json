@@ -1,0 +1,26 @@
+{
+  "collectionName": "components_notification_preferences",
+  "info": {
+    "displayName": "Notification preferences",
+    "icon": "bell",
+    "description": "Opt-in flags per notification category. Emergency alerts are always on."
+  },
+  "options": {},
+  "attributes": {
+    "healthWarnings": {
+      "type": "boolean",
+      "default": true,
+      "required": true
+    },
+    "communityAnnouncements": {
+      "type": "boolean",
+      "default": true,
+      "required": true
+    },
+    "meetingReminders": {
+      "type": "boolean",
+      "default": true,
+      "required": true
+    }
+  }
+}

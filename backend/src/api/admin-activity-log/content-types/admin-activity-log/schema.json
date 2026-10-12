@@ -1,0 +1,51 @@
+{
+  "kind": "collectionType",
+  "collectionName": "admin_activity_logs",
+  "info": {
+    "singularName": "admin-activity-log",
+    "pluralName": "admin-activity-logs",
+    "displayName": "Admin activity log",
+    "description": "Append-only. Updates and deletes are rejected by a document-service middleware."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "actor": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::profile.profile"
+    },
+    "action": {
+      "type": "enumeration",
+      "enum": [
+        "role_granted",
+        "role_revoked",
+        "account_suspended",
+        "account_banned",
+        "account_reactivated",
+        "report_status_changed",
+        "report_edited",
+        "report_removed",
+        "event_created",
+        "event_updated",
+        "event_deleted",
+        "housing_resource_changed",
+        "library_resource_changed",
+        "notification_sent",
+        "data_exported"
+      ],
+      "required": true
+    },
+    "targetType": {
+      "type": "string"
+    },
+    "targetId": {
+      "type": "string"
+    },
+    "details": {
+      "type": "json"
+    }
+  }
+}

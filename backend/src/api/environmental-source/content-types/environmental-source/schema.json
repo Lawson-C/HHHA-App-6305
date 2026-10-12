@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "environmental_sources",
+  "info": {
+    "singularName": "environmental-source",
+    "pluralName": "environmental-sources",
+    "displayName": "Environmental source",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "key": {
+      "type": "uid",
+      "required": true
+    },
+    "name": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "categories": {
+      "type": "json"
+    },
+    "lastFetchedAt": {
+      "type": "datetime"
+    },
+    "lastError": {
+      "type": "text"
+    }
+  }
+}

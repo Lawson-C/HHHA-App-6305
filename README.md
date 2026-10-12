@@ -15,15 +15,19 @@ Prometheus Team No. 6305: Exahel Castaneda, Jeremiah Ochieng, Mark Volovoi, Laws
 ```sh
 nvm use                      # Node 22 LTS
 npm install
-cp .env.example .env         # Supabase URL + publishable key, API URL
-npm start                    # then press i (iOS) or a (Android)
-
-# backend (separate terminal)
-cd backend && npm install && cp .env.example .env
-docker compose up -d && npm run develop    # http://localhost:1337/admin
+npm run ios:sim              # Release build on the iOS simulator, no keys needed (demo mode)
 ```
 
-To verify changes, run `npm run check` (typecheck, lint, tests). The full guide is in [`docs/development.md`](docs/development.md).
+On your own iPhone, without EAS or Expo Go:
+
+```sh
+cp .env.example .env         # set APPLE_TEAM_ID (and Supabase/API values when you have them)
+npm run ios:device           # plug the phone in (or pair over Wi-Fi), pick it from the list
+```
+
+With no `EXPO_PUBLIC_*` values the app runs in **demo mode**: sample content, and sign-in simulated on the device. Choose "Volunteer / Staff" on Sign in to see the admin tools. To use real data, run the backend (`backend/README.md`) and set `EXPO_PUBLIC_API_URL` plus the Supabase values.
+
+Run `npm run check` (typecheck, lint, tests) to verify changes. The full guide is in [`docs/development.md`](docs/development.md).
 
 ## Documentation
 - [`docs/`](docs/README.md): specifications (product, architecture, data model, API, security, UI, decisions)

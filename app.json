@@ -1,40 +1,68 @@
 {
   "expo": {
-    "name": "historic-hunter-hills",
+    "name": "Hunter Hills",
     "slug": "historic-hunter-hills",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/brand/icon-ios.png",
     "scheme": "historichunterhills",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#f5f7f5",
     "ios": {
-      "icon": "./assets/expo.icon",
-      "bundleIdentifier": "org.historichunerhills",
+      "bundleIdentifier": "org.historichunterhills",
+      "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
+      "package": "org.historichunterhills",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#2a4d3a",
+        "foregroundImage": "./assets/brand/icon-android-foreground.png",
+        "monochromeImage": "./assets/brand/icon-android-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/brand/icon-ios.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#2a4d3a",
+          "image": "./assets/brand/splash-monogram.png",
+          "imageWidth": 140
+        }
+      ],
+      "expo-sqlite",
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Hunter Hills uses your location to tag where a reported problem is and to show conditions near you."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Hunter Hills lets you attach photos to a report so the City can find the problem.",
+          "cameraPermission": "Hunter Hills lets you take a photo of a problem you're reporting."
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Hunter Hills adds community events you choose to your calendar."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#1a6232"
         }
       ]
     ],

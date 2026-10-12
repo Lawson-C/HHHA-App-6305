@@ -10,7 +10,7 @@ This is a mobile app for the Historic Hunter Hills Neighborhood Association (Atl
 | --- | --- |
 | Anything | `docs/README.md`, then `docs/decisions.md` (especially **Open questions**) |
 | Feature behavior / scope | `docs/product.md`, `docs/design/user-flows.md` |
-| Screens, navigation, components | `docs/design/ui-spec.md` |
+| Screens, navigation, components | `docs/design/ui-spec.md` and the Figma file it links (use the Figma MCP tools if available: `get_screenshot` / `get_design_context` on the frame) |
 | Content types, fields, relations | `docs/data-model.md` |
 | Endpoints, request/response shapes | `docs/api.md` |
 | Auth, roles, uploads, secrets, privacy | `docs/security.md` (**always**, for any endpoint or data change) |
@@ -34,8 +34,15 @@ The `.docx` files in `docs/` are historical source material. The Markdown specs 
 5. External APIs are called from Strapi only, and their results are cached.
 6. Soft-delete moderated records. `admin-activity-log` is append-only.
 7. Strapi content types are created as `backend/src/api/<name>/content-types/<name>/schema.json` (or with `npm run strapi generate`). Field names and enums must match `docs/data-model.md` exactly. If you need a new field, update `data-model.md` in the same change.
-8. Don't hand-edit `ios/` (see D-008). Change `app.json` / config plugins instead.
-9. App code layout: routes in `src/app/`, reusable UI in `src/components/`, API/auth clients in `src/lib/`, theme tokens only in `src/constants/theme.ts`. Use the `@/` import alias.
+8. Never hand-edit `ios/` or `android/`: they are generated and gitignored (D-008). Change `app.json` / `app.config.ts` / config plugins and rebuild.
+9. App code layout:
+   - Routes go in `src/app/`. Tab screens live under `(tabs)/`, with one Stack per tab.
+   - Reusable UI goes in `src/components/` (design-system primitives in `src/components/ui/`).
+   - Data access goes in `src/lib/api/`. Screens use the hooks in `queries.ts` and never call `fetch`.
+   - Auth lives in `src/lib/auth/`.
+   - Theme tokens live only in `src/constants/theme.ts`. Colors and type come from the Figma variables, so use `Colors.*`, `Typography.*` and `<Text variant>`, never raw hex or font sizes.
+   - Use the `@/` import alias.
+10. **Demo mode** (D-016): every function in `src/lib/api/index.ts` has a real branch (Strapi) and a demo branch (`mock-data.ts`). When you add an endpoint, add both, and keep the demo data shaped exactly like the API.
 
 ## How to approach a task
 1. **Read** the task brief and the relevant specs (table above). Investigate the existing code before proposing anything.
@@ -59,8 +66,10 @@ The `.docx` files in `docs/` are historical source material. The Markdown specs 
 
 ## Commands cheat sheet
 ```sh
-npm start                 # Expo dev server
-npm run ios | android     # native build + run
+npm run ios:sim           # Release build on the iOS simulator (no Metro, no EAS)
+npm run ios:device        # Release build on a USB/Wi-Fi iPhone (needs APPLE_TEAM_ID in .env)
+npm run ios:dev           # Debug build + Metro (fast refresh)
+npm start                 # Metro only (for an already-installed debug build)
 npm run check             # typecheck + lint + test (app)
 npm run format            # prettier
 cd backend && npm run develop   # Strapi on :1337 (needs DB; see backend/README.md)

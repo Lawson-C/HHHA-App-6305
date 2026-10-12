@@ -21,7 +21,7 @@ jobs:
       - run: npm test -- --ci
 
   backend:
-    name: Strapi backend (build)
+    name: Strapi backend (build, test)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -35,3 +35,5 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
       - run: npm run build
+      # Jest + supertest against a throwaway SQLite DB and a fake Supabase JWKS: no secrets needed.
+      - run: npm test -- --ci

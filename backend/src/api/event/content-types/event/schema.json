@@ -1,0 +1,60 @@
+{
+  "kind": "collectionType",
+  "collectionName": "events",
+  "info": {
+    "singularName": "event",
+    "pluralName": "events",
+    "displayName": "Event",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 120
+    },
+    "description": {
+      "type": "text",
+      "required": true
+    },
+    "startsAt": {
+      "type": "datetime",
+      "required": true
+    },
+    "endsAt": {
+      "type": "datetime",
+      "required": true
+    },
+    "eventType": {
+      "type": "enumeration",
+      "enum": [
+        "workforce_development",
+        "financial_literacy",
+        "wellness",
+        "civic_meeting",
+        "community_gathering",
+        "other"
+      ],
+      "required": true
+    },
+    "locationName": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "costLabel": {
+      "type": "string"
+    },
+    "costNote": {
+      "type": "string"
+    },
+    "neighborhood": {
+      "type": "string"
+    }
+  }
+}

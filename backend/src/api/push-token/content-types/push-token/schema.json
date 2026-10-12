@@ -1,0 +1,41 @@
+{
+  "kind": "collectionType",
+  "collectionName": "push_tokens",
+  "info": {
+    "singularName": "push-token",
+    "pluralName": "push-tokens",
+    "displayName": "Push token",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "token": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "column": {
+        "unique": true
+      },
+      "private": true
+    },
+    "profile": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::profile.profile",
+      "private": true
+    },
+    "platform": {
+      "type": "enumeration",
+      "enum": [
+        "ios",
+        "android"
+      ]
+    },
+    "lastRegisteredAt": {
+      "type": "datetime"
+    }
+  }
+}

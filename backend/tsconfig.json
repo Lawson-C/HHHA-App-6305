@@ -36,8 +36,10 @@
 
     // Do not include admin files in the server compilation
     "src/admin/",
-    // Do not include test files
+    // Do not include test files, the test harness or CLI scripts
     "**/*.test.*",
+    "tests/",
+    "scripts/",
     // Do not include plugins in the server compilation
     "src/plugins/**"
   ]

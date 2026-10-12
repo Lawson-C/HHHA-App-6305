@@ -396,6 +396,581 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiAdminActivityLogAdminActivityLog extends Struct.CollectionTypeSchema {
+  collectionName: 'admin_activity_logs';
+  info: {
+    description: 'Append-only. Updates and deletes are rejected by a document-service middleware.';
+    displayName: 'Admin activity log';
+    pluralName: 'admin-activity-logs';
+    singularName: 'admin-activity-log';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    action: Schema.Attribute.Enumeration<
+      [
+        'role_granted',
+        'role_revoked',
+        'account_suspended',
+        'account_banned',
+        'account_reactivated',
+        'report_status_changed',
+        'report_edited',
+        'report_removed',
+        'event_created',
+        'event_updated',
+        'event_deleted',
+        'housing_resource_changed',
+        'library_resource_changed',
+        'notification_sent',
+        'data_exported',
+      ]
+    > &
+      Schema.Attribute.Required;
+    actor: Schema.Attribute.Relation<'manyToOne', 'api::profile.profile'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    details: Schema.Attribute.JSON;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::admin-activity-log.admin-activity-log'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    targetId: Schema.Attribute.String;
+    targetType: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiBlightReportBlightReport extends Struct.CollectionTypeSchema {
+  collectionName: 'blight_reports';
+  info: {
+    description: '';
+    displayName: 'Blight report';
+    pluralName: 'blight-reports';
+    singularName: 'blight-report';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    address: Schema.Attribute.String;
+    category: Schema.Attribute.Enumeration<
+      ['illegal_dumping', 'vacant_lot', 'abandoned_building', 'standing_water', 'air_odor', 'other']
+    > &
+      Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 2000;
+      }>;
+    images: Schema.Attribute.Media<'images', true>;
+    keepNamePrivate: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    latitude: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::blight-report.blight-report'> &
+      Schema.Attribute.Private;
+    longitude: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    reporter: Schema.Attribute.Relation<'manyToOne', 'api::profile.profile'> &
+      Schema.Attribute.Private;
+    resolutionNote: Schema.Attribute.Text;
+    resolvedAt: Schema.Attribute.DateTime;
+    status: Schema.Attribute.Enumeration<
+      ['submitted', 'under_review', 'reported_to_city', 'resolved', 'removed']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'submitted'>;
+    statusHistory: Schema.Attribute.JSON;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiEnvironmentalReadingEnvironmentalReading extends Struct.CollectionTypeSchema {
+  collectionName: 'environmental_readings';
+  info: {
+    description: '';
+    displayName: 'Environmental reading';
+    pluralName: 'environmental-readings';
+    singularName: 'environmental-reading';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    category: Schema.Attribute.Enumeration<
+      ['temperature', 'air_quality', 'water_quality', 'mosquito', 'heat']
+    > &
+      Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    latitude: Schema.Attribute.Decimal;
+    level: Schema.Attribute.Enumeration<
+      [
+        'good',
+        'moderate',
+        'unhealthy_sensitive',
+        'unhealthy',
+        'very_unhealthy',
+        'hazardous',
+        'unknown',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'unknown'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::environmental-reading.environmental-reading'
+    > &
+      Schema.Attribute.Private;
+    longitude: Schema.Attribute.Decimal;
+    observedAt: Schema.Attribute.DateTime;
+    publishedAt: Schema.Attribute.DateTime;
+    raw: Schema.Attribute.JSON & Schema.Attribute.Private;
+    source: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::environmental-source.environmental-source'
+    >;
+    summary: Schema.Attribute.String;
+    unit: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    value: Schema.Attribute.Decimal;
+  };
+}
+
+export interface ApiEnvironmentalSourceEnvironmentalSource extends Struct.CollectionTypeSchema {
+  collectionName: 'environmental_sources';
+  info: {
+    description: '';
+    displayName: 'Environmental source';
+    pluralName: 'environmental-sources';
+    singularName: 'environmental-source';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    categories: Schema.Attribute.JSON;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    key: Schema.Attribute.UID & Schema.Attribute.Required;
+    lastError: Schema.Attribute.Text;
+    lastFetchedAt: Schema.Attribute.DateTime;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::environmental-source.environmental-source'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    url: Schema.Attribute.String;
+  };
+}
+
+export interface ApiEventReminderEventReminder extends Struct.CollectionTypeSchema {
+  collectionName: 'event_reminders';
+  info: {
+    description: '';
+    displayName: 'Event reminder';
+    pluralName: 'event-reminders';
+    singularName: 'event-reminder';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    event: Schema.Attribute.Relation<'manyToOne', 'api::event.event'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::event-reminder.event-reminder'> &
+      Schema.Attribute.Private;
+    profile: Schema.Attribute.Relation<'manyToOne', 'api::profile.profile'>;
+    publishedAt: Schema.Attribute.DateTime;
+    remindAt: Schema.Attribute.DateTime;
+    sentAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiEventEvent extends Struct.CollectionTypeSchema {
+  collectionName: 'events';
+  info: {
+    description: '';
+    displayName: 'Event';
+    pluralName: 'events';
+    singularName: 'event';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    address: Schema.Attribute.String;
+    costLabel: Schema.Attribute.String;
+    costNote: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    description: Schema.Attribute.Text & Schema.Attribute.Required;
+    endsAt: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    eventType: Schema.Attribute.Enumeration<
+      [
+        'workforce_development',
+        'financial_literacy',
+        'wellness',
+        'civic_meeting',
+        'community_gathering',
+        'other',
+      ]
+    > &
+      Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::event.event'> &
+      Schema.Attribute.Private;
+    locationName: Schema.Attribute.String;
+    neighborhood: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    startsAt: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 120;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiHousingInquiryHousingInquiry extends Struct.CollectionTypeSchema {
+  collectionName: 'housing_inquiries';
+  info: {
+    description: '';
+    displayName: 'Housing inquiry';
+    pluralName: 'housing-inquiries';
+    singularName: 'housing-inquiry';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    adminNotes: Schema.Attribute.Text & Schema.Attribute.Private;
+    attachments: Schema.Attribute.Media<'images' | 'files', true> & Schema.Attribute.Private;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    housingResource: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::housing-resource.housing-resource'
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::housing-inquiry.housing-inquiry'> &
+      Schema.Attribute.Private;
+    message: Schema.Attribute.Text &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 4000;
+      }>;
+    preferredContact: Schema.Attribute.Enumeration<['email', 'phone']> & Schema.Attribute.Required;
+    profile: Schema.Attribute.Relation<'manyToOne', 'api::profile.profile'> &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    status: Schema.Attribute.Enumeration<['new', 'in_progress', 'closed']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'new'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiHousingListingHousingListing extends Struct.CollectionTypeSchema {
+  collectionName: 'housing_listings';
+  info: {
+    description: '';
+    displayName: 'Housing listing';
+    pluralName: 'housing-listings';
+    singularName: 'housing-listing';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    address: Schema.Attribute.String & Schema.Attribute.Required;
+    availableFrom: Schema.Attribute.Date;
+    bedrooms: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    image: Schema.Attribute.Media<'images'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::housing-listing.housing-listing'> &
+      Schema.Attribute.Private;
+    neighborhood: Schema.Attribute.Enumeration<
+      [
+        'english_avenue',
+        'vine_city',
+        'hunter_hills',
+        'washington_park',
+        'bankhead',
+        'knight_park',
+        'dixie_hills',
+        'west_lake',
+        'center_hill',
+        'harvel_homes',
+        'georgia_tech',
+      ]
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    rentLabel: Schema.Attribute.String;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    url: Schema.Attribute.String;
+  };
+}
+
+export interface ApiHousingResourceHousingResource extends Struct.CollectionTypeSchema {
+  collectionName: 'housing_resources';
+  info: {
+    description: '';
+    displayName: 'Housing resource';
+    pluralName: 'housing-resources';
+    singularName: 'housing-resource';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    acceptsInquiries: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    category: Schema.Attribute.Enumeration<
+      [
+        'rental_assistance',
+        'eviction_prevention',
+        'affordable_housing',
+        'homeownership',
+        'home_repair',
+      ]
+    > &
+      Schema.Attribute.Required;
+    contactEmail: Schema.Attribute.Email;
+    contactName: Schema.Attribute.String;
+    contactPhone: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    eligibility: Schema.Attribute.JSON;
+    highlights: Schema.Attribute.JSON;
+    inquiryAllowsAttachments: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::housing-resource.housing-resource'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    requiredMaterials: Schema.Attribute.JSON;
+    summary: Schema.Attribute.Text & Schema.Attribute.Required;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    website: Schema.Attribute.String;
+  };
+}
+
+export interface ApiLibraryResourceLibraryResource extends Struct.CollectionTypeSchema {
+  collectionName: 'library_resources';
+  info: {
+    description: '';
+    displayName: 'Library resource';
+    pluralName: 'library-resources';
+    singularName: 'library-resource';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    body: Schema.Attribute.RichText;
+    category: Schema.Attribute.Enumeration<
+      ['education', 'financial_tools', 'health', 'small_business']
+    > &
+      Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    description: Schema.Attribute.Text & Schema.Attribute.Required;
+    durationMinutes: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    featured: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::library-resource.library-resource'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    resourceType: Schema.Attribute.Enumeration<['article', 'video', 'link']> &
+      Schema.Attribute.Required;
+    source: Schema.Attribute.String;
+    thumbnail: Schema.Attribute.Media<'images'>;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    url: Schema.Attribute.String;
+  };
+}
+
+export interface ApiNotificationNotification extends Struct.CollectionTypeSchema {
+  collectionName: 'notifications';
+  info: {
+    description: '';
+    displayName: 'Notification';
+    pluralName: 'notifications';
+    singularName: 'notification';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    actionSteps: Schema.Attribute.JSON;
+    affectedArea: Schema.Attribute.Text;
+    body: Schema.Attribute.Text;
+    category: Schema.Attribute.Enumeration<
+      ['emergency', 'health_warning', 'community_announcement', 'meeting_reminder']
+    > &
+      Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    endsAt: Schema.Attribute.DateTime;
+    issuer: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::notification.notification'> &
+      Schema.Attribute.Private;
+    message: Schema.Attribute.Text &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 240;
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    recipientCount: Schema.Attribute.Integer & Schema.Attribute.Private;
+    sentAt: Schema.Attribute.DateTime;
+    sentBy: Schema.Attribute.Relation<'manyToOne', 'api::profile.profile'> &
+      Schema.Attribute.Private;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 65;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiProfileProfile extends Struct.CollectionTypeSchema {
+  collectionName: 'profiles';
+  info: {
+    description: 'App user profile, one per Supabase auth user. Role and status are only changed by admins.';
+    displayName: 'Profile';
+    pluralName: 'profiles';
+    singularName: 'profile';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    email: Schema.Attribute.Email & Schema.Attribute.Private;
+    fullName: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 100;
+        minLength: 1;
+      }>;
+    language: Schema.Attribute.Enumeration<['en', 'es']> & Schema.Attribute.DefaultTo<'en'>;
+    lastSeenAt: Schema.Attribute.DateTime;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::profile.profile'> &
+      Schema.Attribute.Private;
+    neighborhood: Schema.Attribute.Enumeration<
+      [
+        'english_avenue',
+        'vine_city',
+        'hunter_hills',
+        'washington_park',
+        'bankhead',
+        'knight_park',
+        'dixie_hills',
+        'west_lake',
+        'center_hill',
+        'harvel_homes',
+        'georgia_tech',
+      ]
+    >;
+    notificationPreferences: Schema.Attribute.Component<'notification.preferences', false>;
+    phone: Schema.Attribute.String & Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    role: Schema.Attribute.Enumeration<['resident', 'admin']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'resident'>;
+    status: Schema.Attribute.Enumeration<['active', 'suspended', 'banned']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'active'>;
+    supabaseUserId: Schema.Attribute.String & Schema.Attribute.Required & Schema.Attribute.Unique;
+    suspendedUntil: Schema.Attribute.DateTime;
+    textSize: Schema.Attribute.Enumeration<['default', 'large', 'extra_large']> &
+      Schema.Attribute.DefaultTo<'default'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiPushTokenPushToken extends Struct.CollectionTypeSchema {
+  collectionName: 'push_tokens';
+  info: {
+    description: '';
+    displayName: 'Push token';
+    pluralName: 'push-tokens';
+    singularName: 'push-token';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    lastRegisteredAt: Schema.Attribute.DateTime;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::push-token.push-token'> &
+      Schema.Attribute.Private;
+    platform: Schema.Attribute.Enumeration<['ios', 'android']>;
+    profile: Schema.Attribute.Relation<'manyToOne', 'api::profile.profile'> &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    token: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private &
+      Schema.Attribute.Unique;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
 export interface PluginContentReleasesRelease extends Struct.CollectionTypeSchema {
   collectionName: 'strapi_releases';
   info: {
@@ -825,6 +1400,19 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::admin-activity-log.admin-activity-log': ApiAdminActivityLogAdminActivityLog;
+      'api::blight-report.blight-report': ApiBlightReportBlightReport;
+      'api::environmental-reading.environmental-reading': ApiEnvironmentalReadingEnvironmentalReading;
+      'api::environmental-source.environmental-source': ApiEnvironmentalSourceEnvironmentalSource;
+      'api::event-reminder.event-reminder': ApiEventReminderEventReminder;
+      'api::event.event': ApiEventEvent;
+      'api::housing-inquiry.housing-inquiry': ApiHousingInquiryHousingInquiry;
+      'api::housing-listing.housing-listing': ApiHousingListingHousingListing;
+      'api::housing-resource.housing-resource': ApiHousingResourceHousingResource;
+      'api::library-resource.library-resource': ApiLibraryResourceLibraryResource;
+      'api::notification.notification': ApiNotificationNotification;
+      'api::profile.profile': ApiProfileProfile;
+      'api::push-token.push-token': ApiPushTokenPushToken;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;
