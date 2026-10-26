@@ -1,5 +1,7 @@
 # Task 001: Auth & Roles Foundation (agent-proposed implementation plan)
 
+> **Historical:** implemented on Strapi, which was replaced by Sanity + Supabase on 2026-10-19 (D-024). The auth/roles requirements now live in `supabase/migrations/20261019120000_foundation.sql` and `supabase/migrations/20261019120500_admin.sql`.
+
 > **Status: proposal, awaiting team review. Nothing in this plan has been implemented.**
 > A fresh agent produced this plan with no prior conversation context. It was given only `AGENTS.md` and the brief [`001-auth-foundation.md`](001-auth-foundation.md). It was told to read the specs, investigate the repo, check the versioned Expo/Strapi/Supabase docs, propose a plan, and **stop before implementing**. The plan is kept verbatim. Review notes are at the end.
 

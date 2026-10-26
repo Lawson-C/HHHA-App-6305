@@ -2,7 +2,7 @@ import { QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/re
 
 import * as api from '@/lib/api';
 import { ApiError } from '@/lib/api/client';
-import type { EventType, HousingCategory, LibraryCategory } from '@/lib/api/types';
+import type { CommunityEvent, EventType, HousingCategory, LibraryCategory } from '@/lib/api/types';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,14 +49,18 @@ export const useEvents = (month: Date, types: EventType[]) => {
 export const useEvent = (id: string) =>
   useQuery({ queryKey: keys.event(id), queryFn: () => api.getEvent(id) });
 
-export function useToggleReminder(eventId: string) {
+export function useToggleReminder(event: CommunityEvent | undefined) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async (reminderId: string | null) => {
-      if (reminderId) await api.removeReminder(eventId, reminderId);
-      else await api.setReminder(eventId);
+    mutationFn: async () => {
+      if (!event) return;
+      if (event.hasReminder && event.reminderId) {
+        await api.removeReminder(event.documentId, event.reminderId);
+      } else {
+        await api.setReminder(event);
+      }
     },
-    onSuccess: () => client.invalidateQueries({ queryKey: keys.event(eventId) }),
+    onSuccess: () => event && client.invalidateQueries({ queryKey: keys.event(event.documentId) }),
   });
 }
 
@@ -86,3 +90,29 @@ export const useEnvironmentGlance = () =>
 
 export const useMyReports = (enabled = true) =>
   useQuery({ queryKey: keys.myReports, queryFn: api.listMyReports, enabled });
+
+/**
+ * Warm the cache for the other tabs so switching to them shows content right away instead of
+ * a loading state. Called once from Home; failures are ignored (the tab will just load).
+ */
+export function prefetchTabs() {
+  const now = new Date();
+  const month = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthKey = `${month.getFullYear()}-${month.getMonth() + 1}`;
+  return Promise.allSettled([
+    queryClient.prefetchQuery({
+      queryKey: keys.events(monthKey, []),
+      queryFn: () => api.listEvents(month, []),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: keys.housing(undefined),
+      queryFn: () => api.listHousingResources(),
+    }),
+    queryClient.prefetchQuery({ queryKey: keys.listings, queryFn: api.listHousingListings }),
+    queryClient.prefetchQuery({
+      queryKey: keys.library(undefined, ''),
+      queryFn: () => api.listLibrary(),
+    }),
+    queryClient.prefetchQuery({ queryKey: keys.environment, queryFn: () => api.getEnvironment() }),
+  ]);
+}

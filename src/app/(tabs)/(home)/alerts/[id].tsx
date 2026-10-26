@@ -4,6 +4,7 @@ import { Check, Share2, TriangleAlert } from 'lucide-react-native';
 import { Share, StyleSheet, View } from 'react-native';
 
 import { IconButton } from '@/components/ui/icon-button';
+import { Appear } from '@/components/ui/appear';
 import { Screen } from '@/components/ui/screen';
 import { ErrorState, LoadingState } from '@/components/ui/states';
 import { Tag } from '@/components/ui/tag';
@@ -34,63 +35,65 @@ export default function AlertDetailScreen() {
       ) : isError ? (
         <ErrorState error={error} onRetry={() => refetch()} />
       ) : (
-        <>
-          <View style={styles.titleBlock}>
-            <Tag
-              label={alertCategory[alert.category].label}
-              tone={alertCategory[alert.category].tone}
-            />
-            <Text variant="display" accessibilityRole="header">
-              {alert.title}
-            </Text>
-            <Text variant="body" color="textSecondary">
-              {alert.issuer ? `Issued by ${alert.issuer} · ` : ''}
-              {formatStamp(alert.sentAt)}
-            </Text>
-          </View>
+        <Appear>
+          <>
+            <View style={styles.titleBlock}>
+              <Tag
+                label={alertCategory[alert.category].label}
+                tone={alertCategory[alert.category].tone}
+              />
+              <Text variant="display" accessibilityRole="header">
+                {alert.title}
+              </Text>
+              <Text variant="body" color="textSecondary">
+                {alert.issuer ? `Issued by ${alert.issuer} · ` : ''}
+                {formatStamp(alert.sentAt)}
+              </Text>
+            </View>
 
-          {alert.actionSteps.length ? (
-            <View
-              style={[
-                styles.callout,
-                { backgroundColor: Tones[alertCategory[alert.category].tone].bg },
-              ]}>
-              <View style={styles.calloutTitle}>
-                <TriangleAlert size={20} color={Colors.danger} />
-                <Text variant="bodyStrong" color="danger">
-                  What to do now
-                </Text>
-              </View>
-              {alert.actionSteps.map((step) => (
-                <View key={step} style={styles.step}>
-                  <Check size={18} color={Colors.textPrimary} style={styles.stepIcon} />
-                  <Text variant="body" style={styles.stepText}>
-                    {step}
+            {alert.actionSteps.length ? (
+              <View
+                style={[
+                  styles.callout,
+                  { backgroundColor: Tones[alertCategory[alert.category].tone].bg },
+                ]}>
+                <View style={styles.calloutTitle}>
+                  <TriangleAlert size={20} color={Colors.danger} />
+                  <Text variant="bodyStrong" color="danger">
+                    What to do now
                   </Text>
                 </View>
-              ))}
-            </View>
-          ) : null}
+                {alert.actionSteps.map((step) => (
+                  <View key={step} style={styles.step}>
+                    <Check size={18} color={Colors.textPrimary} style={styles.stepIcon} />
+                    <Text variant="body" style={styles.stepText}>
+                      {step}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
 
-          {alert.body ? <Text variant="bodyLarge">{alert.body}</Text> : null}
+            {alert.body ? <Text variant="bodyLarge">{alert.body}</Text> : null}
 
-          {alert.affectedArea ? (
-            <View style={styles.section}>
-              <Text variant="titleMedium" accessibilityRole="header">
-                Affected area
-              </Text>
-              <Image
-                source={require('@/assets/maps/alert-area.jpg')}
-                style={styles.map}
-                contentFit="cover"
-                accessibilityLabel={`Map of the affected area: ${alert.affectedArea}`}
-              />
-              <Text variant="body" color="textSecondary">
-                {alert.affectedArea}
-              </Text>
-            </View>
-          ) : null}
-        </>
+            {alert.affectedArea ? (
+              <View style={styles.section}>
+                <Text variant="titleMedium" accessibilityRole="header">
+                  Affected area
+                </Text>
+                <Image
+                  source={require('@/assets/maps/alert-area.jpg')}
+                  style={styles.map}
+                  contentFit="cover"
+                  accessibilityLabel={`Map of the affected area: ${alert.affectedArea}`}
+                />
+                <Text variant="body" color="textSecondary">
+                  {alert.affectedArea}
+                </Text>
+              </View>
+            ) : null}
+          </>
+        </Appear>
       )}
     </Screen>
   );

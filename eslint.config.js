@@ -7,6 +7,6 @@ module.exports = defineConfig([
   expoConfig,
   eslintPluginPrettierRecommended,
   {
-    ignores: ['dist/*', 'backend/*', 'ios/*', 'android/*', '.expo/*'],
+    ignores: ['dist/*', 'studio/*', 'supabase/functions/*', 'ios/*', 'android/*', '.expo/*'],
   },
 ]);

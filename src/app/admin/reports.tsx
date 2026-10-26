@@ -5,6 +5,7 @@ import { Alert, StyleSheet, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ChipRow } from '@/components/ui/chip';
+import { Appear } from '@/components/ui/appear';
 import { Screen } from '@/components/ui/screen';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { Tag } from '@/components/ui/tag';
@@ -69,44 +70,46 @@ export default function AdminReportsScreen() {
       ) : reports.data.length === 0 ? (
         <EmptyState title="Nothing to review" message="Reports in this status will show up here." />
       ) : (
-        reports.data.map((r) => {
-          const advance = next[r.status];
-          return (
-            <Card key={r.documentId} style={{ gap: 10 }}>
-              <View style={styles.header}>
-                <Text variant="bodyStrong" style={{ flex: 1 }}>
-                  #{r.id} · {blightCategory[r.category].label}
+        <Appear>
+          {reports.data.map((r) => {
+            const advance = next[r.status];
+            return (
+              <Card key={r.documentId} style={{ gap: 10 }}>
+                <View style={styles.header}>
+                  <Text variant="bodyStrong" style={{ flex: 1 }}>
+                    #{r.id} · {blightCategory[r.category].label}
+                  </Text>
+                  <Tag label={blightStatus[r.status].label} tone={blightStatus[r.status].tone} />
+                </View>
+                <Text variant="bodySmall" color="textSecondary">
+                  {r.address ?? `${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)}`} ·{' '}
+                  {formatStamp(r.createdAt)}
                 </Text>
-                <Tag label={blightStatus[r.status].label} tone={blightStatus[r.status].tone} />
-              </View>
-              <Text variant="bodySmall" color="textSecondary">
-                {r.address ?? `${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)}`} ·{' '}
-                {formatStamp(r.createdAt)}
-              </Text>
-              {r.description ? <Text variant="body">{r.description}</Text> : null}
-              <View style={styles.actions}>
-                {advance ? (
-                  <Button
-                    label={`Mark ${blightStatus[advance].label.toLowerCase()}`}
-                    size="small"
-                    loading={
-                      update.isPending && update.variables?.report.documentId === r.documentId
-                    }
-                    onPress={() => update.mutate({ report: r, status: advance })}
-                  />
-                ) : null}
-                {r.status !== 'removed' ? (
-                  <Button
-                    label="Remove"
-                    size="small"
-                    variant="outline"
-                    onPress={() => confirmRemove(r)}
-                  />
-                ) : null}
-              </View>
-            </Card>
-          );
-        })
+                {r.description ? <Text variant="body">{r.description}</Text> : null}
+                <View style={styles.actions}>
+                  {advance ? (
+                    <Button
+                      label={`Mark ${blightStatus[advance].label.toLowerCase()}`}
+                      size="small"
+                      loading={
+                        update.isPending && update.variables?.report.documentId === r.documentId
+                      }
+                      onPress={() => update.mutate({ report: r, status: advance })}
+                    />
+                  ) : null}
+                  {r.status !== 'removed' ? (
+                    <Button
+                      label="Remove"
+                      size="small"
+                      variant="outline"
+                      onPress={() => confirmRemove(r)}
+                    />
+                  ) : null}
+                </View>
+              </Card>
+            );
+          })}
+        </Appear>
       )}
       {update.isError ? (
         <Text variant="bodySmall" color="danger">

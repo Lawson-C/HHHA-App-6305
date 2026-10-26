@@ -1,7 +1,7 @@
 /**
- * Sample content for demo mode (no EXPO_PUBLIC_API_URL). Copy comes from the Figma
- * prototype so demo builds look like the design. Keep it in step with `npm run seed`
- * in backend/ so demo and seeded-backend builds show the same things.
+ * Sample content for demo mode (no Sanity/Supabase env vars). Copy comes from the Figma
+ * prototype so demo builds look like the design. `cd studio && npm run seed` loads this same
+ * content into Sanity, so demo and real builds start out identical.
  * Phone numbers are fictional 555 numbers; replace with real contacts through the CMS.
  */
 import type {
@@ -133,7 +133,7 @@ export const events: CommunityEvent[] = [
     eventType: 'financial_literacy',
     locationName: 'Hunter Hills Community Center',
     address: '1100 Joseph E. Lowery Blvd NW, Atlanta, GA',
-    neighborhood: 'Hunter Hills',
+    neighborhood: 'hunter_hills',
     costLabel: 'Free',
     costNote: 'Dinner and childcare provided',
   },
@@ -146,7 +146,7 @@ export const events: CommunityEvent[] = [
     eventType: 'wellness',
     locationName: 'Washington Park',
     address: '1125 Lena St NW, Atlanta, GA',
-    neighborhood: 'Washington Park',
+    neighborhood: 'washington_park',
     costLabel: 'Free',
     costNote: null,
   },
@@ -159,7 +159,7 @@ export const events: CommunityEvent[] = [
     eventType: 'workforce_development',
     locationName: 'EAC Opportunity Hub',
     address: '717 Lowery Blvd NW, Atlanta, GA',
-    neighborhood: 'English Avenue',
+    neighborhood: 'english_avenue',
     costLabel: 'Free',
     costNote: null,
   },
@@ -172,7 +172,7 @@ export const events: CommunityEvent[] = [
     eventType: 'workforce_development',
     locationName: 'EAC Opportunity Hub',
     address: '717 Lowery Blvd NW, Atlanta, GA',
-    neighborhood: 'English Avenue',
+    neighborhood: 'english_avenue',
     costLabel: 'Free',
     costNote: null,
   },
@@ -185,7 +185,7 @@ export const events: CommunityEvent[] = [
     eventType: 'community_gathering',
     locationName: 'Lindsay St Park',
     address: '505 Lindsay St NW, Atlanta, GA',
-    neighborhood: 'English Avenue',
+    neighborhood: 'english_avenue',
     costLabel: 'Free',
     costNote: null,
   },
@@ -198,7 +198,7 @@ export const events: CommunityEvent[] = [
     eventType: 'wellness',
     locationName: 'Mattie Freeland Park',
     address: '835 Mayson Turner Rd NW, Atlanta, GA',
-    neighborhood: 'Vine City',
+    neighborhood: 'vine_city',
     costLabel: 'Free',
     costNote: null,
   },
@@ -211,7 +211,7 @@ export const events: CommunityEvent[] = [
     eventType: 'civic_meeting',
     locationName: 'Lindsay Street Baptist Church',
     address: '550 Lindsay St NW, Atlanta, GA',
-    neighborhood: 'English Avenue',
+    neighborhood: 'english_avenue',
     costLabel: 'Free',
     costNote: null,
   },
@@ -224,7 +224,7 @@ export const events: CommunityEvent[] = [
     eventType: 'community_gathering',
     locationName: 'Kathryn Johnston Memorial Park',
     address: '510 Joseph E. Boone Blvd NW, Atlanta, GA',
-    neighborhood: 'English Avenue',
+    neighborhood: 'english_avenue',
     costLabel: 'Free',
     costNote: null,
   },
@@ -237,7 +237,7 @@ export const events: CommunityEvent[] = [
     eventType: 'financial_literacy',
     locationName: 'Hunter Hills Community Center',
     address: '1100 Joseph E. Lowery Blvd NW, Atlanta, GA',
-    neighborhood: 'Hunter Hills',
+    neighborhood: 'hunter_hills',
     costLabel: 'Free',
     costNote: null,
   },
@@ -250,7 +250,7 @@ export const events: CommunityEvent[] = [
     eventType: 'civic_meeting',
     locationName: 'Vine City Community Center',
     address: '480 Joseph E. Lowery Blvd NW, Atlanta, GA',
-    neighborhood: 'Vine City',
+    neighborhood: 'vine_city',
     costLabel: 'Free',
     costNote: null,
   },
@@ -263,7 +263,7 @@ export const events: CommunityEvent[] = [
     eventType: 'financial_literacy',
     locationName: 'Hunter Hills Community Center',
     address: '1100 Joseph E. Lowery Blvd NW, Atlanta, GA',
-    neighborhood: 'Hunter Hills',
+    neighborhood: 'hunter_hills',
     costLabel: 'Free',
     costNote: null,
   },

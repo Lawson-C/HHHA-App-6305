@@ -17,6 +17,14 @@ jest.mock('expo-sqlite/localStorage/install', () => {
 
 jest.mock('expo-notifications', () => ({
   requestPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  getPermissionsAsync: jest.fn(async () => ({ status: 'undetermined' })),
+  getExpoPushTokenAsync: jest.fn(async () => ({ data: 'ExponentPushToken[test]' })),
+  setNotificationHandler: jest.fn(),
+  useLastNotificationResponse: () => null,
 }));
 
 jest.mock('expo-blur', () => ({ BlurView: () => null }));
+
+// Reanimated's layout animations (e.g. <Appear>'s FadeIn) need the library's own Jest mock.
+jest.mock('react-native-worklets', () => require('react-native-worklets/lib/module/mock'));
+jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));

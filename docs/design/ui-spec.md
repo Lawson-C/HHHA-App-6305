@@ -54,6 +54,7 @@ The server enforces every rule again.
 - **Sign-in field.** It is labeled **Email**, not "Phone or email", until SMS sign-in is decided (D-012, Q-002).
 - **Volunteer / Staff segment.** It changes only the helper copy, because the server decides roles. In demo mode it signs in as an admin.
 - **Neighborhood — Expanded.** It omits the MARTA transit section (Q-011).
+- **Neighborhood card.** It shows the neighborhood the phone is in (on-device, D-029), with a "Use my location" button until location is allowed, "Based on your location" once it is, and a note when the phone is outside District 3.
 - **Maps.** Alert and report maps use the static map art from Figma (Q-014).
 - **Library article.** It has Share and Open link. Listen, Text size and bookmarks are not built (Q-015). Text size lives in Profile.
 - **Profile.** The settings gear is omitted. "Language" shows English only (Q-016).

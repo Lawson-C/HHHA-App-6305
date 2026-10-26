@@ -69,8 +69,9 @@ export default function ReportDetailsScreen() {
       footer={
         <Button
           label="Review report"
-          disabled={!draft.location || locating}
+          disabled={!draft.location || locating || draft.photos.length === 0}
           onPress={() => router.push('/report/review')}
+          accessibilityHint={draft.photos.length === 0 ? 'Add at least one photo first' : undefined}
         />
       }>
       <TopBar title={category?.label ?? 'Report'} />
@@ -80,6 +81,9 @@ export default function ReportDetailsScreen() {
           Step 2 of 2
         </Text>
       </View>
+      <Text variant="bodySmall" color="textSecondary" style={{ marginTop: -8 }}>
+        Add at least one photo, up to {MAX_PHOTOS}. Photos help the City find the problem.
+      </Text>
       <View style={styles.photos}>
         {draft.photos.map((p, i) => (
           <View key={p.uri} style={styles.photo}>

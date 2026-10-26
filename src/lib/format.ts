@@ -2,6 +2,12 @@
 
 const TZ = 'America/New_York';
 
+/** Intl throws on invalid dates; every formatter goes through this so bad data can't crash a screen. */
+function toDate(value: string | Date): Date | null {
+  const date = typeof value === 'string' ? new Date(value) : value;
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 const fmt = (opts: Intl.DateTimeFormatOptions) =>
   new Intl.DateTimeFormat('en-US', { timeZone: TZ, ...opts });
 
@@ -12,7 +18,15 @@ const monthShortFmt = fmt({ month: 'short' });
 const dayNumFmt = fmt({ day: 'numeric' });
 const weekdayFmt = fmt({ weekday: 'short' });
 
-export const formatTime = (iso: string) => timeFmt.format(new Date(iso));
+const safeFormat = (formatter: Intl.DateTimeFormat, iso: string) => {
+  const date = toDate(iso);
+  return date ? formatter.format(date) : '';
+};
+
+export const formatTime = (iso: string) => {
+  const date = toDate(iso);
+  return date ? timeFmt.format(date) : '';
+};
 
 /** "6:00 – 7:30 PM" (drops the first AM/PM when both match). */
 export function formatTimeRange(startIso: string, endIso: string) {
@@ -24,16 +38,17 @@ export function formatTimeRange(startIso: string, endIso: string) {
 }
 
 /** "Thursday, September 24" */
-export const formatDayLong = (iso: string) => dayFmt.format(new Date(iso));
+export const formatDayLong = (iso: string) => safeFormat(dayFmt, iso);
 /** "Thursday, Sep 24" */
-export const formatDayShort = (iso: string) => shortDayFmt.format(new Date(iso));
-export const formatMonthShort = (iso: string) => monthShortFmt.format(new Date(iso));
-export const formatDayNumber = (iso: string) => dayNumFmt.format(new Date(iso));
-export const formatWeekdayShort = (iso: string) => weekdayFmt.format(new Date(iso));
+export const formatDayShort = (iso: string) => safeFormat(shortDayFmt, iso);
+export const formatMonthShort = (iso: string) => safeFormat(monthShortFmt, iso);
+export const formatDayNumber = (iso: string) => safeFormat(dayNumFmt, iso);
+export const formatWeekdayShort = (iso: string) => safeFormat(weekdayFmt, iso);
 
 /** "10 min ago", "3 hr ago", "Mon", "Sep 3" */
 export function formatRelative(iso: string, now = new Date()) {
-  const date = new Date(iso);
+  const date = toDate(iso);
+  if (!date) return '';
   const minutes = Math.round((now.getTime() - date.getTime()) / 60_000);
   if (minutes < 1) return 'now';
   if (minutes < 60) return `${minutes} min ago`;
@@ -46,7 +61,8 @@ export function formatRelative(iso: string, now = new Date()) {
 
 /** "Today, 2:32 PM" / "Sep 3, 2:32 PM" */
 export function formatStamp(iso: string, now = new Date()) {
-  const date = new Date(iso);
+  const date = toDate(iso);
+  if (!date) return '';
   const sameDay =
     fmt({ dateStyle: 'short' }).format(date) === fmt({ dateStyle: 'short' }).format(now);
   const day = sameDay ? 'Today' : fmt({ month: 'short', day: 'numeric' }).format(date);
@@ -54,14 +70,16 @@ export function formatStamp(iso: string, now = new Date()) {
 }
 
 /** "Updated 9:38 AM" */
-export const formatUpdated = (iso: string | null) =>
-  iso ? `Updated ${formatTime(iso)}` : 'Not updated yet';
+export const formatUpdated = (iso: string | null) => {
+  const time = iso ? formatTime(iso) : '';
+  return time ? `Updated ${time}` : 'Not updated yet';
+};
 
 /** Calendar key (YYYY-MM-DD) in Atlanta time, for grouping events by day. */
 export function dayKey(iso: string | Date) {
-  const parts = fmt({ year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(
-    typeof iso === 'string' ? new Date(iso) : iso,
-  );
+  const date = toDate(iso);
+  if (!date) return '';
+  const parts = fmt({ year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);
   const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
   return `${get('year')}-${get('month')}-${get('day')}`;
 }

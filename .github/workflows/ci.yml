@@ -20,20 +20,41 @@ jobs:
       - run: npm run lint
       - run: npm test -- --ci
 
-  backend:
-    name: Strapi backend (build, test)
+  studio:
+    name: Sanity Studio (typecheck, schema, build)
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend
+        working-directory: studio
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: backend/package-lock.json
+          cache-dependency-path: studio/package-lock.json
       - run: npm ci
+      - run: npm run typecheck
+      - run: npx sanity schemas validate
       - run: npm run build
-      # Jest + supertest against a throwaway SQLite DB and a fake Supabase JWKS: no secrets needed.
-      - run: npm test -- --ci
+
+  supabase:
+    name: Supabase (RLS tests, function tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      # Pure-logic tests for the Edge Functions (Node 22 strips TypeScript types).
+      - run: node --test --experimental-strip-types supabase/functions/tests/*_test.ts
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+      # A throwaway local database in Docker: applies every migration, then runs pgTAP.
+      # Uses a generated signing key; the real dev key is gitignored.
+      - run: |
+          echo '[]' > supabase/signing_keys.json
+          supabase gen signing-key --algorithm ES256 --append
+          supabase db start
+          supabase test db

@@ -32,4 +32,7 @@ export const StorageKeys = {
   hasSeenWelcome: 'hhhna.hasSeenWelcome',
   demoSession: 'hhhna.demoSession',
   textSize: 'hhhna.textSize',
+  appCopy: 'hhhna.appCopy',
+  lastNeighborhood: 'hhhna.lastNeighborhood',
+  askedNotifications: 'hhhna.askedNotifications',
 } as const;

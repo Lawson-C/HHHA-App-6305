@@ -1,5 +1,7 @@
 # Task 001: Authentication & Roles Foundation
 
+> **Historical:** implemented on Strapi, which was replaced by Sanity + Supabase on 2026-10-19 (D-024). The auth/roles requirements now live in `supabase/migrations/20261019120000_foundation.sql` and `supabase/migrations/20261019120500_admin.sql`.
+
 **Source:** Iteration Plan → Global Setup & Infrastructure ("Basic user authentication and admin roles can be supported"; "backend can communicate with the database"), plus Feature 1 User Stories 1–2 (core only).
 **Why first:** almost every feature depends on knowing who the caller is and whether they're an admin (blight reports, reminders, inquiries, notifications, the admin dashboard). It also proves the whole stack end to end: app → Supabase Auth → Strapi → Supabase Postgres.
 

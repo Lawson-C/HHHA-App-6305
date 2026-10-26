@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
 import { Text } from '@/components/ui/text';
 import { Colors, PagePadding } from '@/constants/theme';
+import { useAppCopy } from '@/lib/app-copy';
 
 /** Figma 01 · Welcome */
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
+  const copy = useAppCopy();
   return (
     <View style={styles.root}>
       <Image
@@ -22,7 +24,7 @@ export default function WelcomeScreen() {
       <View style={[styles.content, { paddingBottom: insets.bottom + 16 }]}>
         <Logo variant="verticalWhite" height={200} />
         <Text variant="bodyLarge" color="textOnBrandContainer" style={styles.tagline}>
-          Alerts, help and events for English Avenue, Vine City and Hunter Hills, all in one place.
+          {copy.welcomeTagline}
         </Text>
         <Button label="Get started" variant="inverse" onPress={() => router.push('/onboarding')} />
         <Pressable

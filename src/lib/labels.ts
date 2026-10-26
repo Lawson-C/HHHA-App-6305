@@ -144,7 +144,7 @@ export const neighborhoods: Record<Neighborhood, { label: string; npu: string }>
   hunter_hills: { label: 'Hunter Hills', npu: 'NPU K' },
   washington_park: { label: 'Washington Park', npu: 'NPU K' },
   bankhead: { label: 'Historic Westin Heights / Bankhead', npu: 'NPU K' },
-  knight_park: { label: 'Knight Park / Howell Station', npu: 'NPU D' },
+  knight_park: { label: 'Knight Park / Howell Station', npu: 'NPU K' },
   dixie_hills: { label: 'Dixie Hills', npu: 'NPU J' },
   west_lake: { label: 'West Lake', npu: 'NPU J' },
   center_hill: { label: 'Center Hill', npu: 'NPU J' },

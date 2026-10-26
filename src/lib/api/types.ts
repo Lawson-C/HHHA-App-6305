@@ -1,6 +1,7 @@
 /**
- * App-side types for the Strapi REST API. Field names and enum values match
- * docs/data-model.md exactly. Strapi 5 responses are flat and keyed by `documentId`.
+ * App-side types for content (Sanity) and resident data (Supabase). Field names and enum
+ * values match docs/data-model.md. `documentId` is the Sanity `_id` for content and the
+ * Supabase primary key for resident records.
  */
 
 export type Role = 'resident' | 'admin';
@@ -80,7 +81,7 @@ export type CommunityEvent = {
   eventType: EventType;
   locationName: string | null;
   address: string | null;
-  neighborhood: string | null;
+  neighborhood: Neighborhood | null;
   costLabel: string | null;
   costNote: string | null;
   /** Present only on detail responses for signed-in users. */

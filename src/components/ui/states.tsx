@@ -1,4 +1,5 @@
 import { CloudOff, Inbox } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
@@ -6,10 +7,26 @@ import { Text } from '@/components/ui/text';
 import { Colors } from '@/constants/theme';
 import { ApiError } from '@/lib/api/client';
 
-export function LoadingState({ label = 'Loading…' }: { label?: string }) {
+/**
+ * Spinner for slow loads only: it appears after a short delay, so fast responses (most of
+ * them, from the CDN or cache) go straight to content without a flash.
+ */
+export function LoadingState({
+  label = 'Loading…',
+  delayMs = 250,
+}: {
+  label?: string;
+  delayMs?: number;
+}) {
+  const [visible, setVisible] = useState(delayMs === 0);
+  useEffect(() => {
+    if (delayMs === 0) return;
+    const timer = setTimeout(() => setVisible(true), delayMs);
+    return () => clearTimeout(timer);
+  }, [delayMs]);
   return (
     <View style={styles.box} accessibilityLiveRegion="polite" accessibilityLabel={label}>
-      <ActivityIndicator color={Colors.bgBrand} />
+      {visible ? <ActivityIndicator color={Colors.bgBrand} /> : null}
     </View>
   );
 }

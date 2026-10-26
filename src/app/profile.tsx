@@ -36,6 +36,7 @@ import type {
 } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/auth-provider';
 import { initials } from '@/lib/format';
+import { useNotificationPermission } from '@/lib/push';
 import { neighborhoods } from '@/lib/labels';
 import { setTextSize, textScales, useTextSize } from '@/lib/text-scale';
 
@@ -43,7 +44,15 @@ import { setTextSize, textScales, useTextSize } from '@/lib/text-scale';
 export default function ProfileScreen() {
   const { profile, profileError, refreshProfile, setProfile, signOut, isAdmin, isDemo } = useAuth();
   const textSize = useTextSize();
+  const notifications = useNotificationPermission();
   const [sheet, setSheet] = useState<'neighborhood' | 'textSize' | null>(null);
+
+  // Leave the screen first, then sign out once the transition has played; signing out first
+  // would make the signed-in-only route disappear with a hard cut.
+  const signOutAndLeave = () => {
+    router.dismissTo('/');
+    setTimeout(() => signOut(), 400);
+  };
   const save = useMutation({
     mutationFn: (update: ProfileUpdate) => updateMe(update),
     onSuccess: (next) => setProfile(next),
@@ -63,7 +72,7 @@ export default function ProfileScreen() {
               }
               onRetry={refreshProfile}
             />
-            <Button label="Sign out" variant="outline" icon={LogOut} onPress={signOut} />
+            <Button label="Sign out" variant="outline" icon={LogOut} onPress={signOutAndLeave} />
           </>
         ) : (
           <LoadingState />
@@ -125,6 +134,20 @@ export default function ProfileScreen() {
       ) : null}
 
       <SectionHeader title="Notifications" />
+      {notifications.status === 'denied' || notifications.status === 'undetermined' ? (
+        <Card style={styles.notifOff}>
+          <Text variant="bodyStrong">Notifications are off on this phone</Text>
+          <Text variant="bodySmall" color="textSecondary">
+            You won&apos;t get any alerts, including emergencies, until you turn them on.
+          </Text>
+          <Button
+            label={notifications.status === 'denied' ? 'Open Settings' : 'Turn on notifications'}
+            size="small"
+            onPress={notifications.enable}
+            style={{ alignSelf: 'flex-start' }}
+          />
+        </Card>
+      ) : null}
       <Card padded={false}>
         <ToggleRow
           icon={TriangleAlert}
@@ -189,15 +212,7 @@ export default function ProfileScreen() {
         ) : null}
       </View>
 
-      <Button
-        label="Sign out"
-        icon={LogOut}
-        variant="outline"
-        onPress={async () => {
-          await signOut();
-          router.dismissTo('/');
-        }}
-      />
+      <Button label="Sign out" icon={LogOut} variant="outline" onPress={signOutAndLeave} />
 
       <Sheet visible={sheet === 'textSize'} title="Text size" onClose={() => setSheet(null)}>
         {(Object.keys(textScales) as TextSize[]).map((size) => (
@@ -246,6 +261,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   demo: { backgroundColor: Colors.bgBrandFaint },
+  notifOff: { gap: 8, backgroundColor: Colors.warningSubtle },
   option: { minHeight: 48, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 12 },
   optionSelected: { backgroundColor: Colors.bgBrandSubtle },
 });

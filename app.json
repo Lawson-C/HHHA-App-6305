@@ -64,6 +64,15 @@
         {
           "color": "#1a6232"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "usePrecompiledModules": false,
+            "enableSceneSupport": true
+          }
+        }
       ]
     ],
     "experiments": {

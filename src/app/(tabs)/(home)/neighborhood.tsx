@@ -18,10 +18,10 @@ import { Text } from '@/components/ui/text';
 import { Colors, MinTouch, PagePadding, Radius, TabBarClearance } from '@/constants/theme';
 import { useEnvironment, useEnvironmentGlance } from '@/lib/api/queries';
 import type { EnvironmentCategory, EnvironmentReading } from '@/lib/api/types';
-import { useAuth } from '@/lib/auth/auth-provider';
 import { formatTime, formatUpdated } from '@/lib/format';
 import { neighborhoods } from '@/lib/labels';
 import { neighborhoodArt } from '@/lib/neighborhood-art';
+import { useNeighborhood } from '@/lib/use-neighborhood';
 
 const conditionRows: { category: EnvironmentCategory; label: string; icon: LucideIcon }[] = [
   { category: 'air_quality', label: 'Air quality', icon: Wind },
@@ -40,11 +40,12 @@ function conditionColor(reading: EnvironmentReading | undefined) {
 /** Figma 02 · Neighborhood — Expanded */
 export default function NeighborhoodScreen() {
   const insets = useSafeAreaInsets();
-  const { profile } = useAuth();
   const glance = useEnvironmentGlance();
   const env = useEnvironment();
-  const neighborhood = profile?.neighborhood ?? 'english_avenue';
-  const info = neighborhoods[neighborhood];
+  const { neighborhood } = useNeighborhood();
+  const info = neighborhood
+    ? neighborhoods[neighborhood]
+    : { label: 'Council District 3', npu: 'NPUs E, J, K, L' };
   const byCategory = new Map((env.data ?? []).map((r) => [r.category, r]));
 
   return (
@@ -77,7 +78,7 @@ export default function NeighborhoodScreen() {
             {info.label}
           </Text>
           <Text variant="body" color="textOnBrandContainerMuted">
-            Council District 3 · {info.npu}
+            {neighborhood ? `Council District 3 · ${info.npu}` : info.npu}
           </Text>
         </View>
 
@@ -104,10 +105,18 @@ export default function NeighborhoodScreen() {
               </View>
             </View>
             {glance.data.hourly.length ? (
-              <View style={styles.panel}>
-                <View style={styles.hourly}>
+              <View style={[styles.panel, styles.hourlyPanel]}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.hourly}
+                  accessibilityLabel="Hourly forecast">
                   {glance.data.hourly.map((h, i) => (
-                    <View key={h.time} style={styles.hour}>
+                    <View
+                      key={h.time}
+                      style={styles.hour}
+                      accessible
+                      accessibilityLabel={`${i === 0 ? 'Now' : formatTime(h.time)}, ${Math.round(h.temperatureF)} degrees`}>
                       <Text variant="bodySmall" color="textOnBrandContainerMuted">
                         {i === 0 ? 'Now' : formatTime(h.time).replace(':00', '')}
                       </Text>
@@ -117,7 +126,7 @@ export default function NeighborhoodScreen() {
                       </Text>
                     </View>
                   ))}
-                </View>
+                </ScrollView>
               </View>
             ) : null}
           </>
@@ -174,8 +183,10 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     paddingHorizontal: 14,
   },
-  hourly: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14 },
-  hour: { alignItems: 'center', gap: 6 },
+  // Panel padding moves inside the scroll view so hours scroll edge to edge.
+  hourlyPanel: { paddingHorizontal: 0 },
+  hourly: { paddingVertical: 14, paddingHorizontal: 8 },
+  hour: { alignItems: 'center', gap: 6, width: 58 },
   condition: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
   conditionBorder: {
     borderTopWidth: StyleSheet.hairlineWidth,

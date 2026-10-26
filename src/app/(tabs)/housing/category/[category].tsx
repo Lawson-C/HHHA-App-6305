@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { ListRow } from '@/components/ui/list-row';
+import { Appear } from '@/components/ui/appear';
 import { Screen } from '@/components/ui/screen';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
@@ -32,19 +33,21 @@ export default function HousingCategoryScreen() {
           message="The Foundation team is adding programs. Check back soon or call the housing help line."
         />
       ) : (
-        <View style={styles.list}>
-          {programs.data.map((p) => (
-            <ListRow
-              key={p.documentId}
-              title={p.title}
-              subtitle={p.summary}
-              icon={meta.icon}
-              onPress={() =>
-                router.push({ pathname: '/program/[id]', params: { id: p.documentId } })
-              }
-            />
-          ))}
-        </View>
+        <Appear>
+          <View style={styles.list}>
+            {programs.data.map((p) => (
+              <ListRow
+                key={p.documentId}
+                title={p.title}
+                subtitle={p.summary}
+                icon={meta.icon}
+                onPress={() =>
+                  router.push({ pathname: '/program/[id]', params: { id: p.documentId } })
+                }
+              />
+            ))}
+          </View>
+        </Appear>
       )}
     </Screen>
   );

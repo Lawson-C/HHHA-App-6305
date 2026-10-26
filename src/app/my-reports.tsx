@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ReportProgress } from '@/components/report-progress';
 import { Card } from '@/components/ui/card';
+import { Appear } from '@/components/ui/appear';
 import { Screen } from '@/components/ui/screen';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { Tag } from '@/components/ui/tag';
@@ -27,22 +28,24 @@ export default function MyReportsScreen() {
           message="Use the Report button to tell us about a problem."
         />
       ) : (
-        reports.data.map((r) => (
-          <Card key={r.documentId} style={{ gap: 12 }}>
-            <View style={styles.header}>
-              <View style={{ flex: 1 }}>
-                <Text variant="bodyStrong">
-                  {blightCategory[r.category].label} · #{r.id}
-                </Text>
-                <Text variant="bodySmall" color="textSecondary">
-                  {r.address ?? 'Location saved'} · {formatStamp(r.createdAt)}
-                </Text>
+        <Appear>
+          {reports.data.map((r) => (
+            <Card key={r.documentId} style={{ gap: 12 }}>
+              <View style={styles.header}>
+                <View style={{ flex: 1 }}>
+                  <Text variant="bodyStrong">
+                    {blightCategory[r.category].label} · #{r.id}
+                  </Text>
+                  <Text variant="bodySmall" color="textSecondary">
+                    {r.address ?? 'Location saved'} · {formatStamp(r.createdAt)}
+                  </Text>
+                </View>
+                <Tag label={blightStatus[r.status].label} tone={blightStatus[r.status].tone} />
               </View>
-              <Tag label={blightStatus[r.status].label} tone={blightStatus[r.status].tone} />
-            </View>
-            {r.status !== 'removed' ? <ReportProgress report={r} /> : null}
-          </Card>
-        ))
+              {r.status !== 'removed' ? <ReportProgress report={r} /> : null}
+            </Card>
+          ))}
+        </Appear>
       )}
     </Screen>
   );

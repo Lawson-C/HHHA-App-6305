@@ -12,6 +12,7 @@ import { SectionHeader } from '@/components/ui/section-header';
 import { Text } from '@/components/ui/text';
 import { Colors, PagePadding, Radius, Tones } from '@/constants/theme';
 import { useHousingListings, useHousingResources } from '@/lib/api/queries';
+import { useAppCopy } from '@/lib/app-copy';
 import type { HousingCategory } from '@/lib/api/types';
 import { housingCategory, neighborhoods } from '@/lib/labels';
 
@@ -25,6 +26,7 @@ const order: HousingCategory[] = [
 
 /** Figma 05 · Housing */
 export default function HousingScreen() {
+  const copy = useAppCopy();
   const eviction = useHousingResources('eviction_prevention');
   const listings = useHousingListings();
   const evictionProgram = eviction.data?.[0];
@@ -50,9 +52,9 @@ export default function HousingScreen() {
             <HandHeart size={22} color={Colors.warning} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text variant="bodyStrong">Facing eviction?</Text>
+            <Text variant="bodyStrong">{copy.evictionBannerTitle}</Text>
             <Text variant="body" color="textSecondary">
-              Free legal help is available today.
+              {copy.evictionBannerBody}
             </Text>
           </View>
         </View>

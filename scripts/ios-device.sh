@@ -16,10 +16,13 @@ if [ -z "${APPLE_TEAM_ID:-}" ]; then
   exit 1
 fi
 
-# Generate the native project when it's missing or was generated without the team.
-if [ ! -d ios ] || ! grep -q "DEVELOPMENT_TEAM = $APPLE_TEAM_ID" ios/*.xcodeproj/project.pbxproj 2>/dev/null; then
+# Generate the native project when missing, or re-sync it with app.json / app.config.ts
+# (team ID, Info.plist keys that depend on .env, plugins). Non-clean prebuild is quick.
+if [ ! -d ios ]; then
   echo "› Generating ios/ (expo prebuild)…"
   CI=1 npx expo prebuild --platform ios --clean --no-install
+else
+  CI=1 npx expo prebuild --platform ios --no-install >/dev/null
 fi
 if [ ! -d ios/Pods ] || [ ios/Podfile.lock -nt ios/Pods/Manifest.lock ] 2>/dev/null; then
   echo "› Installing pods…"
@@ -35,17 +38,24 @@ read -r DEVICE_ID UDID NAME < <(python3 - "$DEVICE_JSON" "$WANT" <<'PY'
 import json, sys
 devices = json.load(open(sys.argv[1]))["result"]["devices"]
 want = sys.argv[2].lower()
+unavailable = []
 for d in devices:
     hw, props = d.get("hardwareProperties", {}), d.get("deviceProperties", {})
     name = props.get("name", "")
-    if hw.get("deviceType") != "iPhone":
+    # Physical iPhones only: newer Xcode also lists simulators here.
+    if hw.get("deviceType") != "iPhone" or hw.get("reality") == "simulated" or d.get("visibilityClass") == "simulators":
         continue
     if want and want not in (name.lower(), d["identifier"].lower(), hw.get("udid", "").lower()):
         continue
-    if d.get("connectionProperties", {}).get("tunnelState") == "unavailable":
+    if d.get("connectionProperties", {}).get("tunnelState") == "unavailable" or not hw.get("udid"):
+        unavailable.append(name)
         continue
-    print(d["identifier"], hw.get("udid", ""), name.replace(" ", "_"))
+    print(d["identifier"], hw["udid"], name.replace(" ", "_"))
     break
+else:
+    if unavailable:
+        print("Found but not reachable: " + ", ".join(unavailable) + ". Unlock the phone, keep it on the "
+              "same Wi-Fi or plug it in, and check it appears in Xcode → Window → Devices.", file=sys.stderr)
 PY
 )
 rm -f "$DEVICE_JSON"
@@ -60,9 +70,21 @@ SCHEME="$(basename "$WORKSPACE" .xcworkspace)"
 # -allowProvisioningUpdates lets Xcode register the App ID and a profile that includes
 # the app's capabilities (push notifications). Without it Xcode falls back to the
 # wildcard team profile, which can't sign push.
-xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release \
+# Full output goes to a log; on failure only the real errors are shown.
+LOG="ios/build/ios-device.log"
+mkdir -p ios/build
+if ! xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release \
   -destination "id=$UDID" -derivedDataPath ios/build -allowProvisioningUpdates \
-  -quiet build
+  build >"$LOG" 2>&1; then
+  echo "✗ Build failed. Errors (full log: $LOG):" >&2
+  grep -E "error:|❌" "$LOG" | grep -v "produced no further output" | sort -u | head -20 >&2
+  if grep -q "this SDK is not supported by the compiler" "$LOG"; then
+    echo "Hint: Xcode's Swift doesn't match prebuilt modules. Run: rm -rf ios && npm run ios:device (docs/decisions.md D-028)." >&2
+  elif grep -qE "Provisioning Profile|Signing for|requires a development team" "$LOG"; then
+    echo "Hint: signing. Check APPLE_TEAM_ID in .env and that Xcode → Settings → Accounts is signed in." >&2
+  fi
+  exit 1
+fi
 
 APP="ios/build/Build/Products/Release-iphoneos/$SCHEME.app"
 BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")"

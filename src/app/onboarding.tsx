@@ -1,4 +1,3 @@
-import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import {
   Bell,
@@ -21,6 +20,7 @@ import { StepDots } from '@/components/ui/step-dots';
 import { Text } from '@/components/ui/text';
 import { Colors, Radius, Shadow, type Tone } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/auth-provider';
+import { askForNotifications } from '@/lib/push';
 
 type PreviewRow = { icon: LucideIcon; tone: Tone; title: string; meta: string };
 
@@ -99,18 +99,15 @@ export default function OnboardingScreen() {
 
   const finish = (to: '/sign-up' | '/') => {
     markWelcomeSeen();
-    router.replace(to);
+    if (to === '/') router.dismissTo('/');
+    else router.replace(to);
   };
 
   const next = async () => {
     if (index === 0) {
       // Ask now, while the benefit is on screen. Declining is fine; emergency alerts are
       // explained again in Profile.
-      try {
-        await Notifications.requestPermissionsAsync();
-      } catch {
-        // Not available (e.g. simulator without push); continue.
-      }
+      await askForNotifications();
     }
     if (last) finish('/sign-up');
     else setIndex(index + 1);

@@ -13,17 +13,24 @@ import { TopBar } from '@/components/ui/top-bar';
 import { Colors } from '@/constants/theme';
 import { createHousingInquiry } from '@/lib/api';
 import { useHousingResource } from '@/lib/api/queries';
+import { useAppCopy } from '@/lib/app-copy';
 
 /** Housing inquiry form (docs/product.md F4, user story 2). */
 export default function InquiryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const program = useHousingResource(id);
+  const copy = useAppCopy();
   const [message, setMessage] = useState('');
   const [preferredContact, setPreferredContact] = useState<'email' | 'phone'>('phone');
   const [error, setError] = useState<string | null>(null);
   const submit = useMutation({
     mutationFn: () =>
-      createHousingInquiry({ housingResource: id, message: message.trim(), preferredContact }),
+      createHousingInquiry({
+        housingResource: id,
+        programTitle: program.data?.title ?? 'Housing program',
+        message: message.trim(),
+        preferredContact,
+      }),
   });
 
   const onSubmit = () => {
@@ -44,8 +51,7 @@ export default function InquiryScreen() {
             Inquiry sent
           </Text>
           <Text variant="bodyLarge" color="textSecondary" style={styles.center}>
-            The Foundation team will {preferredContact === 'phone' ? 'call' : 'email'} you within 2
-            business days about {program.data?.title ?? 'this program'}.
+            {copy.inquiryConfirmation}
           </Text>
         </View>
       </Screen>

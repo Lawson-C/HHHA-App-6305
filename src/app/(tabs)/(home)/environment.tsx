@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { Card } from '@/components/ui/card';
 import { ChipRow } from '@/components/ui/chip';
 import { IconButton } from '@/components/ui/icon-button';
+import { Appear } from '@/components/ui/appear';
 import { Screen } from '@/components/ui/screen';
 import { Sheet } from '@/components/ui/sheet';
 import { StatTile } from '@/components/ui/stat-tile';
@@ -14,6 +15,7 @@ import { Text } from '@/components/ui/text';
 import { TopBar } from '@/components/ui/top-bar';
 import { Colors, Radius } from '@/constants/theme';
 import { useEnvironment } from '@/lib/api/queries';
+import { useAppCopy } from '@/lib/app-copy';
 import type { EnvironmentCategory, EnvironmentReading } from '@/lib/api/types';
 import { formatRelative, formatUpdated } from '@/lib/format';
 import { environmentLevel } from '@/lib/labels';
@@ -35,16 +37,6 @@ const tiles: { category: EnvironmentCategory; label: string; icon: LucideIcon }[
   { category: 'mosquito', label: 'Mosquito risk', icon: Bug },
 ];
 
-const explainers: Partial<Record<EnvironmentCategory, string>> = {
-  air_quality:
-    'The Air Quality Index (AQI) runs from 0 to 500. Under 50 is good. Over 100, people with asthma, heart disease, older adults and children should limit time outside.',
-  water_quality:
-    'Tap water status comes from the City of Atlanta. During a boil water advisory, boil water for at least one minute before drinking or cooking with it.',
-  heat: 'The heat index is how hot it feels when humidity is added to the temperature. Over 90°F, take breaks in the shade and drink water often.',
-  mosquito:
-    'Mosquito risk is based on Fulton County Health spraying and trap reports. Empty standing water around your home to lower the risk.',
-};
-
 const aqiBands = [
   { label: 'Good', range: '0–50', color: Colors.accentLeaf },
   { label: 'Moderate', range: '51–100', color: Colors.warning },
@@ -60,8 +52,11 @@ const sources = [
   ['Neighbor reports', 'Residents, via this app'],
 ];
 
+const hasData = (r: EnvironmentReading | undefined): r is EnvironmentReading =>
+  Boolean(r && r.level !== 'unknown' && r.observedAt);
+
 function valueFor(reading: EnvironmentReading | undefined) {
-  if (!reading) return '—';
+  if (!hasData(reading)) return '—';
   if (reading.value == null) return reading.summary;
   return reading.unit === '°F'
     ? `${Math.round(reading.value)}°`
@@ -69,10 +64,11 @@ function valueFor(reading: EnvironmentReading | undefined) {
 }
 
 function statusFor(reading: EnvironmentReading | undefined) {
-  if (!reading) return { text: 'Not available', color: Colors.textSecondary };
+  // No reading yet (e.g. no data source configured for this category).
+  if (!hasData(reading)) return { text: 'Not available', color: Colors.textSecondary };
   if (reading.stale)
     return {
-      text: `Last updated ${formatRelative(reading.observedAt ?? '')}`,
+      text: `Last updated ${formatRelative(reading.observedAt!)}`,
       color: Colors.textSecondary,
     };
   // When the value itself is a word (e.g. "Low"), the status line repeats nothing.
@@ -85,6 +81,13 @@ export default function EnvironmentScreen() {
   const [tab, setTab] = useState<Tab>('overview');
   const [sheet, setSheet] = useState<'aqi' | 'sources' | null>(null);
   const env = useEnvironment();
+  const copy = useAppCopy();
+  const explainers: Partial<Record<EnvironmentCategory, string>> = {
+    air_quality: copy.airQualityExplainer,
+    water_quality: copy.waterQualityExplainer,
+    heat: copy.heatExplainer,
+    mosquito: copy.mosquitoExplainer,
+  };
   const byCategory = new Map((env.data ?? []).map((r) => [r.category, r]));
   const updatedAt =
     env.data
@@ -122,60 +125,61 @@ export default function EnvironmentScreen() {
       ) : env.isError ? (
         <ErrorState error={env.error} onRetry={() => env.refetch()} />
       ) : (
-        <>
-          <View style={styles.grid}>
-            {visibleTiles.map((t) => {
-              const reading = byCategory.get(t.category);
-              const status = statusFor(reading);
-              return (
-                <View key={t.category} style={styles.tileWrap}>
-                  <StatTile
-                    icon={t.icon}
-                    label={t.label}
-                    value={valueFor(reading)}
-                    status={status.text}
-                    statusColor={status.color}
-                    onPress={
-                      t.category === 'air_quality'
-                        ? () => setSheet('aqi')
-                        : () => setTab(t.category as Tab)
-                    }
-                  />
-                </View>
-              );
-            })}
-          </View>
+        <Appear>
+          <>
+            <View style={styles.grid}>
+              {visibleTiles.map((t) => {
+                const reading = byCategory.get(t.category);
+                const status = statusFor(reading);
+                return (
+                  <View key={t.category} style={styles.tileWrap}>
+                    <StatTile
+                      icon={t.icon}
+                      label={t.label}
+                      value={valueFor(reading)}
+                      status={status.text}
+                      statusColor={status.color}
+                      onPress={
+                        t.category === 'air_quality'
+                          ? () => setSheet('aqi')
+                          : () => setTab(t.category as Tab)
+                      }
+                    />
+                  </View>
+                );
+              })}
+            </View>
 
-          {tab !== 'overview' ? (
-            <Card style={{ gap: 8 }}>
-              <Text variant="bodyStrong">About this measure</Text>
-              <Text variant="body" color="textSecondary">
-                {explainers[tab]}
-              </Text>
-              {byCategory.get(tab)?.source ? (
-                <Text variant="bodySmall" color="textSecondary">
-                  Source: {byCategory.get(tab)!.source}
+            {tab !== 'overview' ? (
+              <Card style={{ gap: 8 }}>
+                <Text variant="bodyStrong">About this measure</Text>
+                <Text variant="body" color="textSecondary">
+                  {explainers[tab]}
                 </Text>
-              ) : null}
-            </Card>
-          ) : null}
+                {byCategory.get(tab)?.source ? (
+                  <Text variant="bodySmall" color="textSecondary">
+                    Source: {byCategory.get(tab)!.source}
+                  </Text>
+                ) : null}
+              </Card>
+            ) : null}
 
-          {tab === 'overview' || tab === 'heat' ? (
-            <Card style={{ gap: 12 }}>
-              <Text variant="titleSmall">Heat zones today</Text>
-              <Image
-                source={require('@/assets/maps/district-heat.jpg')}
-                style={styles.map}
-                contentFit="cover"
-                accessibilityLabel="Map of District 3 showing the hottest areas in orange and red"
-              />
-              <Text variant="bodySmall" color="textSecondary">
-                Darker orange areas get hotter in the afternoon. Cooling centers open when the heat
-                index passes 100°F.
-              </Text>
-            </Card>
-          ) : null}
-        </>
+            {tab === 'overview' || tab === 'heat' ? (
+              <Card style={{ gap: 12 }}>
+                <Text variant="titleSmall">Heat zones today</Text>
+                <Image
+                  source={require('@/assets/maps/district-heat.jpg')}
+                  style={styles.map}
+                  contentFit="cover"
+                  accessibilityLabel="Map of District 3 showing the hottest areas in orange and red"
+                />
+                <Text variant="bodySmall" color="textSecondary">
+                  {copy.heatMapNote}
+                </Text>
+              </Card>
+            ) : null}
+          </>
+        </Appear>
       )}
 
       <Sheet visible={sheet === 'aqi'} title="Air quality index" onClose={() => setSheet(null)}>

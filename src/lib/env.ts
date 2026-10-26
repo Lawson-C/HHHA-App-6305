@@ -2,26 +2,31 @@
  * The only place `process.env.EXPO_PUBLIC_*` is read. Expo inlines these at build time,
  * so each one must be accessed with a static `process.env.EXPO_PUBLIC_X` expression.
  *
- * When a value is missing the app runs in **demo mode**: data comes from bundled sample
- * content (src/lib/api/mock-data.ts) and sign-in is simulated on the device. This lets
- * anyone build and click through the app without a backend or Supabase project.
+ * Missing values switch the app into **demo mode** (decision D-016):
+ * - no Sanity project → content (alerts, events, housing, library) comes from
+ *   src/lib/api/mock-data.ts;
+ * - no Supabase → sign-in is simulated on the device and resident data stays on the device.
+ * This lets anyone build and click through the app without any accounts.
  */
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '';
-const apiUrl = (process.env.EXPO_PUBLIC_API_URL ?? '').replace(/\/+$/, '');
+const sanityProjectId = process.env.EXPO_PUBLIC_SANITY_PROJECT_ID ?? '';
+const sanityDataset = process.env.EXPO_PUBLIC_SANITY_DATASET ?? 'production';
+/** Optional: where staff edit content (e.g. https://hunter-hills.sanity.studio). */
+const sanityStudioUrl = process.env.EXPO_PUBLIC_SANITY_STUDIO_URL ?? '';
 
 export const env = {
   supabaseUrl,
   supabasePublishableKey,
-  apiUrl,
-  /** Real auth needs both Supabase values. */
+  sanityProjectId,
+  sanityDataset,
+  sanityStudioUrl,
   hasSupabase: Boolean(supabaseUrl && supabasePublishableKey),
-  /** Real data needs the Strapi URL. */
-  hasApi: Boolean(apiUrl),
+  hasSanity: Boolean(sanityProjectId),
 } as const;
 
-/** Demo data is used whenever there is no API to talk to. */
-export const isDemoData = !env.hasApi;
+/** Content (Sanity) falls back to bundled demo content. */
+export const isDemoContent = !env.hasSanity;
 
-/** Demo auth is used whenever Supabase isn't configured. */
+/** Accounts and resident data (Supabase) fall back to an on-device simulation. */
 export const isDemoAuth = !env.hasSupabase;

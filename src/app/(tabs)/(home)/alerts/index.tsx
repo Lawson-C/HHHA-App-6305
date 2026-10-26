@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AlertRow } from '@/components/alert-row';
 import { ChipRow } from '@/components/ui/chip';
+import { Appear } from '@/components/ui/appear';
 import { Screen } from '@/components/ui/screen';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
@@ -45,16 +46,18 @@ export default function AlertsScreen() {
       ) : alerts.data.length === 0 ? (
         <EmptyState title="No alerts here" message="Nothing has been sent in this category." />
       ) : (
-        groupByRecency(alerts.data).map((group) => (
-          <View key={group.title} style={styles.group}>
-            <Text variant="bodySmallStrong" color="textSecondary">
-              {group.title}
-            </Text>
-            {group.items.map((alert) => (
-              <AlertRow key={alert.documentId} alert={alert} />
-            ))}
-          </View>
-        ))
+        <Appear>
+          {groupByRecency(alerts.data).map((group) => (
+            <View key={group.title} style={styles.group}>
+              <Text variant="bodySmallStrong" color="textSecondary">
+                {group.title}
+              </Text>
+              {group.items.map((alert) => (
+                <AlertRow key={alert.documentId} alert={alert} />
+              ))}
+            </View>
+          ))}
+        </Appear>
       )}
     </Screen>
   );

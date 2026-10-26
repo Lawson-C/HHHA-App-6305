@@ -119,17 +119,11 @@ export default function ReviewReportScreen() {
           onEdit={() => router.back()}
         />
       </Card>
-      {draft.photos.length ? (
-        <View style={styles.photos}>
-          {draft.photos.map((p) => (
-            <Image key={p.uri} source={{ uri: p.uri }} style={styles.photo} contentFit="cover" />
-          ))}
-        </View>
-      ) : (
-        <Text variant="bodySmall" color="textSecondary">
-          No photos added. Photos help the City find the problem faster.
-        </Text>
-      )}
+      <View style={styles.photos}>
+        {draft.photos.map((p) => (
+          <Image key={p.uri} source={{ uri: p.uri }} style={styles.photo} contentFit="cover" />
+        ))}
+      </View>
       {error ? (
         <Text variant="bodySmallStrong" color="danger" accessibilityLiveRegion="polite">
           {error}

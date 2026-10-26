@@ -4,6 +4,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Appear } from '@/components/ui/appear';
 import { Screen } from '@/components/ui/screen';
 import { ErrorState, LoadingState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
@@ -86,57 +87,59 @@ export default function ProgramScreen() {
       ) : isError ? (
         <ErrorState error={error} onRetry={() => refetch()} />
       ) : (
-        <>
-          <View style={{ gap: 10 }}>
-            <Text variant="display" accessibilityRole="header">
-              {program.title}
-            </Text>
-            <Text variant="bodyLarge" color="textSecondary">
-              {program.summary}
-            </Text>
-          </View>
-          {program.highlights.length ? (
-            <View style={styles.highlights}>
-              {program.highlights.slice(0, 3).map((h) => (
-                <Card key={h.label} style={styles.highlight}>
-                  <Text
-                    variant="titleMedium"
-                    color="textBrand"
-                    numberOfLines={1}
-                    adjustsFontSizeToFit>
-                    {h.value}
-                  </Text>
-                  <Text variant="bodySmall" color="textSecondary">
-                    {h.label}
-                  </Text>
-                </Card>
-              ))}
+        <Appear>
+          <>
+            <View style={{ gap: 10 }}>
+              <Text variant="display" accessibilityRole="header">
+                {program.title}
+              </Text>
+              <Text variant="bodyLarge" color="textSecondary">
+                {program.summary}
+              </Text>
             </View>
-          ) : null}
-          <Checklist title="Who can apply" items={program.eligibility} icon={CircleCheck} />
-          <Checklist title="What you'll need" items={program.requiredMaterials} icon={FileText} />
-          {program.contactName || program.contactPhone || program.website ? (
-            <Card style={styles.listCard}>
-              <Text variant="bodyStrong">Contact</Text>
-              {program.contactName ? <Text variant="body">{program.contactName}</Text> : null}
-              {program.contactPhone ? (
-                <Text variant="body" color="textSecondary">
-                  {formatPhone(program.contactPhone)}
-                </Text>
-              ) : null}
-              {program.website ? (
-                <Button
-                  label="Visit website"
-                  icon={ExternalLink}
-                  variant="ghost"
-                  size="small"
-                  style={{ alignSelf: 'flex-start', paddingHorizontal: 0 }}
-                  onPress={() => Linking.openURL(program.website!)}
-                />
-              ) : null}
-            </Card>
-          ) : null}
-        </>
+            {program.highlights.length ? (
+              <View style={styles.highlights}>
+                {program.highlights.slice(0, 3).map((h) => (
+                  <Card key={h.label} style={styles.highlight}>
+                    <Text
+                      variant="titleMedium"
+                      color="textBrand"
+                      numberOfLines={1}
+                      adjustsFontSizeToFit>
+                      {h.value}
+                    </Text>
+                    <Text variant="bodySmall" color="textSecondary">
+                      {h.label}
+                    </Text>
+                  </Card>
+                ))}
+              </View>
+            ) : null}
+            <Checklist title="Who can apply" items={program.eligibility} icon={CircleCheck} />
+            <Checklist title="What you'll need" items={program.requiredMaterials} icon={FileText} />
+            {program.contactName || program.contactPhone || program.website ? (
+              <Card style={styles.listCard}>
+                <Text variant="bodyStrong">Contact</Text>
+                {program.contactName ? <Text variant="body">{program.contactName}</Text> : null}
+                {program.contactPhone ? (
+                  <Text variant="body" color="textSecondary">
+                    {formatPhone(program.contactPhone)}
+                  </Text>
+                ) : null}
+                {program.website ? (
+                  <Button
+                    label="Visit website"
+                    icon={ExternalLink}
+                    variant="ghost"
+                    size="small"
+                    style={{ alignSelf: 'flex-start', paddingHorizontal: 0 }}
+                    onPress={() => Linking.openURL(program.website!)}
+                  />
+                ) : null}
+              </Card>
+            ) : null}
+          </>
+        </Appear>
       )}
     </Screen>
   );

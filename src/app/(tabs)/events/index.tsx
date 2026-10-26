@@ -5,6 +5,7 @@ import { CalendarMonth, keyFor } from '@/components/calendar-month';
 import { EventCard } from '@/components/event-card';
 import { ChipRow } from '@/components/ui/chip';
 import { PageTitle } from '@/components/ui/page-title';
+import { Appear } from '@/components/ui/appear';
 import { Screen } from '@/components/ui/screen';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
@@ -89,11 +90,13 @@ export default function EventsScreen() {
           }
         />
       ) : (
-        <View style={styles.list}>
-          {dayEvents.map((e) => (
-            <EventCard key={e.documentId} event={e} />
-          ))}
-        </View>
+        <Appear>
+          <View style={styles.list}>
+            {dayEvents.map((e) => (
+              <EventCard key={e.documentId} event={e} />
+            ))}
+          </View>
+        </Appear>
       )}
     </Screen>
   );

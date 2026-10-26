@@ -3,15 +3,11 @@ import { StyleSheet, View } from 'react-native';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { Colors } from '@/constants/theme';
-
-const steps = [
-  'The Foundation team reviews your report, usually within 2 days.',
-  'If the City needs to act, we file a 311 request for you.',
-  "You get a notification at each step until it's resolved.",
-];
+import { useAppCopy } from '@/lib/app-copy';
 
 /** Figma 04 · Info sheet — How reporting works */
 export function ReportInfoSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const steps = useAppCopy().reportingSteps;
   return (
     <Sheet visible={visible} title="How reporting works" onClose={onClose}>
       {steps.map((text, i) => (

@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Camera, ExternalLink, Megaphone } from 'lucide-react-native';
+import { Camera, Megaphone } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
 import { ListRow } from '@/components/ui/list-row';
+import { Appear } from '@/components/ui/appear';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
 import { ErrorState, LoadingState } from '@/components/ui/states';
@@ -20,6 +21,7 @@ const actionLabels: Record<string, string> = {
   report_status_changed: 'Updated a report',
   report_edited: 'Edited a report',
   report_removed: 'Removed a report',
+  inquiry_status_changed: 'Updated an inquiry',
   event_created: 'Added an event',
   event_updated: 'Updated an event',
   event_deleted: 'Deleted an event',
@@ -33,7 +35,7 @@ const actionLabels: Record<string, string> = {
   data_exported: 'Exported data',
 };
 
-/** Admin dashboard (docs/product.md F8, user story 1). Content editing lives in the Strapi admin panel. */
+/** Admin dashboard (docs/product.md F8, user story 1). Content and alerts are edited in the Sanity Studio. */
 export default function AdminDashboard() {
   const summary = useQuery({ queryKey: ['admin-summary'], queryFn: getAdminSummary });
   const activity = useQuery({ queryKey: ['admin-activity'], queryFn: listAdminActivity });
@@ -42,7 +44,7 @@ export default function AdminDashboard() {
     ? [
         { label: 'Reports to review', value: summary.data.pendingReports },
         { label: 'New inquiries', value: summary.data.newInquiries },
-        { label: 'Active alerts', value: summary.data.activeAlerts },
+        { label: 'Open reports', value: summary.data.activeReports },
         { label: 'Residents', value: summary.data.residents },
       ]
     : [];
@@ -58,18 +60,20 @@ export default function AdminDashboard() {
       ) : summary.isError ? (
         <ErrorState error={summary.error} onRetry={() => summary.refetch()} />
       ) : (
-        <View style={styles.grid}>
-          {stats.map((s) => (
-            <Card key={s.label} style={styles.stat}>
-              <Text variant="titleLarge" color="textBrand">
-                {s.value}
-              </Text>
-              <Text variant="bodySmall" color="textSecondary">
-                {s.label}
-              </Text>
-            </Card>
-          ))}
-        </View>
+        <Appear>
+          <View style={styles.grid}>
+            {stats.map((s) => (
+              <Card key={s.label} style={styles.stat}>
+                <Text variant="titleLarge" color="textBrand">
+                  {s.value}
+                </Text>
+                <Text variant="bodySmall" color="textSecondary">
+                  {s.label}
+                </Text>
+              </Card>
+            ))}
+          </View>
+        </Appear>
       )}
 
       <View style={{ gap: 10 }}>
@@ -79,20 +83,20 @@ export default function AdminDashboard() {
           subtitle="Update status, resolve or remove"
           onPress={() => router.push('/admin/reports')}
         />
-        <ListRow
-          icon={Megaphone}
-          title="Send an alert"
-          subtitle="Push to residents by category"
-          onPress={() => router.push('/admin/send-alert')}
-        />
-        {env.apiUrl ? (
+        {env.sanityStudioUrl ? (
           <ListRow
-            icon={ExternalLink}
-            title="Edit content"
-            subtitle="Events, housing, library (Strapi admin)"
-            onPress={() => WebBrowser.openBrowserAsync(`${env.apiUrl}/admin`)}
+            icon={Megaphone}
+            title="Send alerts & edit content"
+            subtitle="Alerts, events, housing, library (Sanity Studio)"
+            onPress={() => WebBrowser.openBrowserAsync(env.sanityStudioUrl)}
           />
-        ) : null}
+        ) : (
+          <ListRow
+            icon={Megaphone}
+            title="Send alerts & edit content"
+            subtitle="Publish alerts and content in the Sanity Studio. Publishing an alert sends the push."
+          />
+        )}
       </View>
 
       <SectionHeader title="Recent activity" />
@@ -101,16 +105,18 @@ export default function AdminDashboard() {
       ) : activity.isError ? (
         <ErrorState error={activity.error} onRetry={() => activity.refetch()} />
       ) : (
-        <Card padded={false}>
-          {activity.data.map((a) => (
-            <ListRow
-              key={a.documentId}
-              standalone={false}
-              title={actionLabels[a.action] ?? a.action}
-              subtitle={`${a.actor?.fullName ?? 'Admin'} · ${formatRelative(a.createdAt)}`}
-            />
-          ))}
-        </Card>
+        <Appear>
+          <Card padded={false}>
+            {activity.data.map((a) => (
+              <ListRow
+                key={a.documentId}
+                standalone={false}
+                title={actionLabels[a.action] ?? a.action}
+                subtitle={`${a.actor?.fullName ?? 'Admin'} · ${formatRelative(a.createdAt)}`}
+              />
+            ))}
+          </Card>
+        </Appear>
       )}
     </Screen>
   );

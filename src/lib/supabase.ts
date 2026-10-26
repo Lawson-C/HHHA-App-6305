@@ -7,7 +7,7 @@ import { env } from '@/lib/env';
 
 /**
  * Supabase client, configured per the Expo SDK 57 guide
- * (https://docs.expo.dev/guides/using-supabase/). Used for auth only (AGENTS.md rule 1).
+ * (https://docs.expo.dev/guides/using-supabase/). Auth plus resident data; every query is checked by Row Level Security.
  * `null` in demo mode, when the Supabase env vars aren't set.
  */
 export const supabase: SupabaseClient | null = env.hasSupabase

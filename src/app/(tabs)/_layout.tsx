@@ -10,7 +10,9 @@ export default function TabsLayout() {
   if (!session && !hasSeenWelcome) return <Redirect href="/welcome" />;
 
   return (
-    <Tabs tabBar={(props) => <TabBar {...props} />} screenOptions={{ headerShown: false }}>
+    <Tabs
+      tabBar={(props) => <TabBar {...props} />}
+      screenOptions={{ headerShown: false, animation: 'fade' }}>
       <Tabs.Screen name="(home)" />
       <Tabs.Screen name="events" />
       <Tabs.Screen name="housing" />

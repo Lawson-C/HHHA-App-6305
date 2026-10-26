@@ -1,4 +1,4 @@
-/** Client-side form rules. The server (Supabase Auth, Strapi) enforces them again. */
+/** Client-side form rules. Supabase (Auth settings and database constraints) enforces them again. */
 
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_RULE = `At least ${PASSWORD_MIN_LENGTH} characters.`;

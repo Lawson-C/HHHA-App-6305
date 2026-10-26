@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ChipRow } from '@/components/ui/chip';
 import { ListRow } from '@/components/ui/list-row';
 import { PageTitle } from '@/components/ui/page-title';
+import { Appear } from '@/components/ui/appear';
 import { Screen } from '@/components/ui/screen';
 import { SearchField } from '@/components/ui/search-field';
 import { SectionHeader } from '@/components/ui/section-header';
@@ -100,17 +101,19 @@ export default function LibraryScreen() {
           }
         />
       ) : (
-        <View style={styles.list}>
-          {rest.map((r) => (
-            <ListRow
-              key={r.documentId}
-              title={r.title}
-              subtitle={subtitle(r)}
-              icon={resourceType[r.resourceType].icon}
-              onPress={() => open(r)}
-            />
-          ))}
-        </View>
+        <Appear>
+          <View style={styles.list}>
+            {rest.map((r) => (
+              <ListRow
+                key={r.documentId}
+                title={r.title}
+                subtitle={subtitle(r)}
+                icon={resourceType[r.resourceType].icon}
+                onPress={() => open(r)}
+              />
+            ))}
+          </View>
+        </Appear>
       )}
     </Screen>
   );

@@ -5,6 +5,7 @@ import { Pressable, Share, StyleSheet, View } from 'react-native';
 
 import { SimpleMarkdown } from '@/components/simple-markdown';
 import { Button } from '@/components/ui/button';
+import { Appear } from '@/components/ui/appear';
 import { Screen } from '@/components/ui/screen';
 import { ErrorState, LoadingState } from '@/components/ui/states';
 import { Tag } from '@/components/ui/tag';
@@ -36,69 +37,71 @@ export default function LibraryArticleScreen() {
       ) : isError ? (
         <ErrorState error={error} onRetry={() => refetch()} />
       ) : (
-        <>
-          {r.resourceType === 'video' ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Play video: ${r.title}`}
-              onPress={openLink}
-              style={[
-                styles.hero,
-                { backgroundColor: Tones[libraryCategory[r.category].tone].bg },
-              ]}>
-              <View style={styles.play}>
-                <Play size={28} color={Colors.warning} />
-              </View>
-            </Pressable>
-          ) : null}
-          <View style={{ gap: 10 }}>
-            <Text variant="display" accessibilityRole="header">
-              {r.title}
-            </Text>
-            <Tag
-              label={libraryCategory[r.category].label}
-              tone={libraryCategory[r.category].tone}
-            />
-            <Text variant="body" color="textSecondary">
-              {[
-                r.source,
-                r.durationMinutes
-                  ? `${r.durationMinutes} min ${resourceType[r.resourceType].label.toLowerCase()}`
-                  : null,
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </Text>
-          </View>
-          <View style={styles.actions}>
-            <Button
-              label="Share"
-              icon={Share2}
-              variant="outline"
-              size="small"
-              onPress={() => Share.share({ message: r.url ? `${r.title}: ${r.url}` : r.title })}
-            />
-            {r.url && r.resourceType !== 'video' ? (
-              <Button
-                label="Open link"
-                icon={ExternalLink}
-                variant="secondary"
-                size="small"
+        <Appear>
+          <>
+            {r.resourceType === 'video' ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Play video: ${r.title}`}
                 onPress={openLink}
-              />
+                style={[
+                  styles.hero,
+                  { backgroundColor: Tones[libraryCategory[r.category].tone].bg },
+                ]}>
+                <View style={styles.play}>
+                  <Play size={28} color={Colors.warning} />
+                </View>
+              </Pressable>
             ) : null}
-          </View>
-          {r.body ? (
-            <SimpleMarkdown source={r.body} />
-          ) : (
-            <View style={styles.noBody}>
-              <FileText size={20} color={Colors.textSecondary} />
-              <Text variant="bodyLarge" style={{ flex: 1 }}>
-                {r.description}
+            <View style={{ gap: 10 }}>
+              <Text variant="display" accessibilityRole="header">
+                {r.title}
+              </Text>
+              <Tag
+                label={libraryCategory[r.category].label}
+                tone={libraryCategory[r.category].tone}
+              />
+              <Text variant="body" color="textSecondary">
+                {[
+                  r.source,
+                  r.durationMinutes
+                    ? `${r.durationMinutes} min ${resourceType[r.resourceType].label.toLowerCase()}`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </Text>
             </View>
-          )}
-        </>
+            <View style={styles.actions}>
+              <Button
+                label="Share"
+                icon={Share2}
+                variant="outline"
+                size="small"
+                onPress={() => Share.share({ message: r.url ? `${r.title}: ${r.url}` : r.title })}
+              />
+              {r.url && r.resourceType !== 'video' ? (
+                <Button
+                  label="Open link"
+                  icon={ExternalLink}
+                  variant="secondary"
+                  size="small"
+                  onPress={openLink}
+                />
+              ) : null}
+            </View>
+            {r.body ? (
+              <SimpleMarkdown source={r.body} />
+            ) : (
+              <View style={styles.noBody}>
+                <FileText size={20} color={Colors.textSecondary} />
+                <Text variant="bodyLarge" style={{ flex: 1 }}>
+                  {r.description}
+                </Text>
+              </View>
+            )}
+          </>
+        </Appear>
       )}
     </Screen>
   );

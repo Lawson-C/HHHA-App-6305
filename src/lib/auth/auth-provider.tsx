@@ -16,7 +16,7 @@ import { ApiError } from '@/lib/api/client';
 import { demoProfile } from '@/lib/api/mock-data';
 import { queryClient } from '@/lib/api/queries';
 import type { Profile } from '@/lib/api/types';
-import { isDemoAuth, isDemoData } from '@/lib/env';
+import { isDemoAuth } from '@/lib/env';
 import { storage, StorageKeys } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 
@@ -84,7 +84,7 @@ function initialDemoState(): { session: AuthSession | null; profile: Profile | n
   if (!isDemoAuth) return { session: null, profile: null };
   const demo = readDemoSession();
   if (!demo) return { session: null, profile: null };
-  if (isDemoData) api.resetDemoProfile(demo.fullName, demo.email);
+  api.resetDemoProfile(demo.fullName, demo.email);
   return {
     session: { userId: 'demo-user', email: demo.email, accessToken: null },
     profile: demoProfileFor(demo),
@@ -104,10 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const lastProfileFetch = useRef(0);
   const currentUserId = useRef<string | null>(null);
 
-  const loadProfile = useCallback(async (token: string | null) => {
+  const loadProfile = useCallback(async () => {
     try {
-      const me = await api.getMe(token);
+      const me = await api.getMe();
       setProfile(me);
+      api.touchLastSeen().catch(() => undefined);
       setProfileError(null);
     } catch (error) {
       setProfile(null);
@@ -127,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const next = fromSupabase(data.session);
       setSession(next);
       currentUserId.current = next?.userId ?? null;
-      if (next) await loadProfile(next.accessToken);
+      if (next) await loadProfile();
       setIsLoading(false);
     });
 
@@ -143,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Don't await Supabase calls inside this callback (Supabase docs); defer the fetch.
       if (event === 'SIGNED_IN' && next.userId !== currentUserId.current) {
         currentUserId.current = next.userId;
-        setTimeout(() => loadProfile(next.accessToken), 0);
+        setTimeout(() => loadProfile(), 0);
       }
     });
 
@@ -162,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         !isDemoAuth &&
         Date.now() - lastProfileFetch.current > PROFILE_REFRESH_MS
       ) {
-        loadProfile(session.accessToken);
+        loadProfile();
       }
     });
     return () => sub.remove();
@@ -179,7 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isDemoAuth) {
         const demo: DemoSession = { email: normalized, asStaff: opts?.asStaff };
         storage.set(StorageKeys.demoSession, JSON.stringify(demo));
-        if (isDemoData) api.resetDemoProfile(undefined, normalized);
+        api.resetDemoProfile(undefined, normalized);
         setSession({ userId: 'demo-user', email: normalized, accessToken: null });
         setProfile(demoProfileFor(demo));
         markWelcomeSeen();
@@ -198,7 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isDemoAuth) {
         const demo: DemoSession = { email: normalized, fullName: fullName.trim() };
         storage.set(StorageKeys.demoSession, JSON.stringify(demo));
-        if (isDemoData) api.resetDemoProfile(demo.fullName, normalized);
+        api.resetDemoProfile(demo.fullName, normalized);
         setSession({ userId: 'demo-user', email: normalized, accessToken: null });
         setProfile(demoProfileFor(demo));
         markWelcomeSeen();
@@ -240,7 +241,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = useCallback(async () => {
     if (!session) return;
     if (isDemoAuth) return;
-    await loadProfile(session.accessToken);
+    await loadProfile();
   }, [session, loadProfile]);
 
   const value = useMemo<AuthContextValue>(

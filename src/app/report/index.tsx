@@ -11,6 +11,7 @@ import { Text } from '@/components/ui/text';
 import { TopBar } from '@/components/ui/top-bar';
 import { Colors, Radius, Shadow, Tones } from '@/constants/theme';
 import type { BlightCategory } from '@/lib/api/types';
+import { useAppCopy } from '@/lib/app-copy';
 import { blightCategory } from '@/lib/labels';
 import { useReportDraft } from '@/lib/report-draft';
 
@@ -27,6 +28,7 @@ const order: BlightCategory[] = [
 export default function ChooseTypeScreen() {
   const { draft, update, locate } = useReportDraft();
   const [info, setInfo] = useState(false);
+  const copy = useAppCopy();
 
   return (
     <Screen
@@ -82,12 +84,12 @@ export default function ChooseTypeScreen() {
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="If someone is in danger or there's a fire, call 911 first"
+        accessibilityLabel={copy.emergencyNotice}
         onPress={() => Linking.openURL('tel:911')}
         style={[styles.emergency, { backgroundColor: Tones.info.bg }]}>
         <Phone size={20} color={Colors.info} />
         <Text variant="bodyStrong" color="info" style={{ flex: 1 }}>
-          If someone is in danger or there&apos;s a fire, call 911 first.
+          {copy.emergencyNotice}
         </Text>
       </Pressable>
 

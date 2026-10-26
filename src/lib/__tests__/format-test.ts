@@ -26,4 +26,12 @@ describe('format', () => {
     expect(initials('Denise Carter')).toBe('DC');
     expect(initials('denise')).toBe('D');
   });
+
+  it('never throws on missing or invalid dates', () => {
+    for (const bad of ['', 'not a date']) {
+      expect(formatRelative(bad)).toBe('');
+      expect(formatTimeRange(bad, bad)).toBe(' – ');
+      expect(dayKey(bad)).toBe('');
+    }
+  });
 });

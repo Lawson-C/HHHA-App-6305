@@ -1,13 +1,18 @@
-/** Admin-only API calls (docs/api.md, rows marked A). The server rejects non-admins with 403. */
-import { apiRequest } from '@/lib/api/client';
+/**
+ * Admin-only data (docs/product.md F8). Supabase rejects non-admins (RLS and `is_admin()`
+ * checks in supabase/migrations/…_admin.sql). Content (alerts, events, housing, library) is
+ * edited in the Sanity Studio, not here.
+ */
 import * as demo from '@/lib/api/mock-data';
-import type { AlertCategory, BlightReport, BlightStatus } from '@/lib/api/types';
-import { isDemoData } from '@/lib/env';
+import { fromReportRow, toApiError } from '@/lib/api/resident';
+import type { BlightReport, BlightStatus } from '@/lib/api/types';
+import { isDemoAuth } from '@/lib/env';
+import { supabase } from '@/lib/supabase';
 
 export type AdminSummary = {
   pendingReports: number;
   newInquiries: number;
-  activeAlerts: number;
+  activeReports: number;
   residents: number;
 };
 
@@ -21,65 +26,84 @@ export type ActivityEntry = {
 
 const wait = (ms = 300) => new Promise((r) => setTimeout(r, ms));
 
+function db() {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  return supabase;
+}
+
 export async function getAdminSummary(): Promise<AdminSummary> {
-  if (isDemoData) {
+  if (isDemoAuth) {
     await wait();
-    return {
-      pendingReports: 4,
-      newInquiries: 2,
-      activeAlerts: demo.alerts.length - 1,
-      residents: 128,
-    };
+    return { pendingReports: 4, newInquiries: 2, activeReports: 9, residents: 128 };
   }
-  return (await apiRequest<{ data: AdminSummary }>('/admin/summary')).data;
+  const { data, error } = await db().rpc('admin_summary');
+  if (error) throw toApiError(error);
+  const s = data as {
+    reports: { submitted: number; underReview: number; active: number };
+    inquiries: { new: number };
+    users: { residents: number };
+  };
+  return {
+    pendingReports: s.reports.submitted + s.reports.underReview,
+    newInquiries: s.inquiries.new,
+    activeReports: s.reports.active,
+    residents: s.users.residents,
+  };
 }
 
 export async function listAdminActivity(): Promise<ActivityEntry[]> {
-  if (isDemoData) {
+  if (isDemoAuth) {
     await wait();
     const now = Date.now();
     return [
       {
         documentId: 'a1',
         action: 'notification_sent',
-        targetType: 'notification',
+        targetType: 'alert',
         createdAt: new Date(now - 600_000).toISOString(),
         actor: { fullName: 'Maya T.' },
       },
       {
         documentId: 'a2',
         action: 'report_status_changed',
-        targetType: 'blight-report',
+        targetType: 'blight_report',
         createdAt: new Date(now - 7_200_000).toISOString(),
         actor: { fullName: 'Maya T.' },
       },
-      {
-        documentId: 'a3',
-        action: 'event_created',
-        targetType: 'event',
-        createdAt: new Date(now - 86_400_000).toISOString(),
-        actor: { fullName: 'Volunteer' },
-      },
     ];
   }
-  return (
-    await apiRequest<{ data: ActivityEntry[] }>('/admin/activity', {
-      query: { 'pagination[pageSize]': 20 },
-    })
-  ).data;
+  const { data, error } = await db()
+    .from('admin_activity')
+    .select('id, action, target_type, created_at, actor_full_name')
+    .order('created_at', { ascending: false })
+    .limit(20);
+  if (error) throw toApiError(error);
+  return (data ?? []).map((r) => ({
+    documentId: String(r.id),
+    action: r.action as string,
+    targetType: r.target_type as string,
+    createdAt: r.created_at as string,
+    actor: r.actor_full_name ? { fullName: r.actor_full_name as string } : null,
+  }));
 }
 
 /** Admins see every report status. */
 export async function listReportsForModeration(status?: BlightStatus): Promise<BlightReport[]> {
-  if (isDemoData) {
+  if (isDemoAuth) {
     await wait();
     return demo.myReports.filter((r) => !status || r.status === status);
   }
-  return (
-    await apiRequest<{ data: BlightReport[] }>('/blight-reports', {
-      query: { 'filters[status][$eq]': status, sort: 'createdAt:desc', 'pagination[pageSize]': 50 },
-    })
-  ).data;
+  let query = db()
+    .from('blight_reports')
+    .select(
+      'id, category, description, latitude, longitude, address, status, status_history, created_at, blight_report_photos(storage_path)',
+    )
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (status) query = query.eq('status', status);
+  const { data, error } = await query;
+  if (error) throw toApiError(error);
+  return (data ?? []).map((row) => fromReportRow(row as Parameters<typeof fromReportRow>[0]));
 }
 
 export async function updateReportStatus(
@@ -87,29 +111,12 @@ export async function updateReportStatus(
   status: BlightStatus,
   resolutionNote?: string,
 ) {
-  if (isDemoData) {
+  if (isDemoAuth) {
     await wait();
     return;
   }
-  await apiRequest(`/blight-reports/${documentId}`, {
-    method: 'PUT',
-    body: { status, resolutionNote },
-  });
-}
-
-export async function sendNotification(input: {
-  title: string;
-  message: string;
-  category: AlertCategory;
-}) {
-  if (isDemoData) {
-    await wait(600);
-    return { recipientCount: 0 };
-  }
-  return (
-    await apiRequest<{ data: { recipientCount: number } }>('/notifications', {
-      method: 'POST',
-      body: input,
-    })
-  ).data;
+  const patch: Record<string, unknown> = { status };
+  if (resolutionNote !== undefined) patch.resolution_note = resolutionNote;
+  const { error } = await db().from('blight_reports').update(patch).eq('id', Number(documentId));
+  if (error) throw toApiError(error);
 }
